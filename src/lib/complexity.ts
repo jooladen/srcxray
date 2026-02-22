@@ -3,6 +3,7 @@ export interface LineScore {
   borderColor: string;
   bgColor: string;
   label: string;
+  reasons: string[];
 }
 
 export function computeLineComplexity(code: string): number[] {
@@ -55,9 +56,46 @@ function scoreLineComplexity(line: string): number {
 }
 
 export function getLineScore(score: number): LineScore {
-  if (score <= 0) return { score, borderColor: 'transparent', bgColor: 'transparent', label: '빈 줄' };
-  if (score <= 2) return { score, borderColor: '#22c55e', bgColor: '#f0fdf4', label: '단순' };
-  if (score <= 5) return { score, borderColor: '#eab308', bgColor: '#fefce8', label: '보통' };
-  if (score <= 9) return { score, borderColor: '#f97316', bgColor: '#fff7ed', label: '복잡' };
-  return { score, borderColor: '#ef4444', bgColor: '#fef2f2', label: '매우 복잡' };
+  if (score <= 0) return { score, borderColor: 'transparent', bgColor: 'transparent', label: '빈 줄', reasons: [] };
+  if (score <= 2) return { score, borderColor: '#22c55e', bgColor: '#f0fdf4', label: '단순', reasons: [] };
+  if (score <= 5) return { score, borderColor: '#eab308', bgColor: '#fefce8', label: '보통', reasons: [] };
+  if (score <= 9) return { score, borderColor: '#f97316', bgColor: '#fff7ed', label: '복잡', reasons: [] };
+  return { score, borderColor: '#ef4444', bgColor: '#fef2f2', label: '매우 복잡', reasons: [] };
+}
+
+export function getComplexityReasons(line: string): string[] {
+  const trimmed = line.trimStart();
+  if (!trimmed || trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*'))
+    return [];
+
+  const reasons: string[] = [];
+
+  const indent = line.length - trimmed.length;
+  if (indent >= 6) reasons.push(`들여쓰기 ${indent / 2}단계 — 중첩이 깊어요`);
+
+  if (/\basync\b/.test(trimmed)) reasons.push('async — 비동기 처리');
+  if (/\bawait\b/.test(trimmed)) reasons.push('await — 결과를 기다려요');
+
+  const ternaries = (trimmed.match(/\?(?!\.)/g) ?? []).length;
+  if (ternaries >= 2) reasons.push(`삼항연산자 ${ternaries}개 — 조건이 겹겹이`);
+  else if (ternaries === 1) reasons.push('삼항연산자 — A면 B, 아니면 C');
+
+  const logicals = (trimmed.match(/&&|\|\|/g) ?? []).length;
+  if (logicals > 0) reasons.push(`논리연산자 ${logicals}개 — 조건이 복잡해요`);
+
+  const arrows = (trimmed.match(/=>/g) ?? []).length;
+  if (arrows > 1) reasons.push(`화살표함수 ${arrows}개 — 함수 안에 함수`);
+
+  const hooks = (trimmed.match(/\buse[A-Z]\w+\s*\(/g) ?? []).length;
+  if (hooks > 0) reasons.push(`훅 호출 ${hooks}개`);
+
+  if (/\btry\s*\{|\bcatch\s*\(/.test(trimmed)) reasons.push('try-catch — 에러 처리');
+
+  return reasons;
+}
+
+export function getLineScoreWithReasons(score: number, line: string): LineScore {
+  const base = getLineScore(score);
+  const reasons = score > 2 ? getComplexityReasons(line) : [];
+  return { ...base, reasons };
 }

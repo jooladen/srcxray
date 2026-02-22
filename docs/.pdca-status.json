@@ -1,11 +1,12 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-02-22T13:37:43.280Z",
+  "lastUpdated": "2026-02-22T14:01:49.386Z",
   "activeFeatures": [
     "srcxray",
-    "wow-features"
+    "wow-features",
+    "wow-features-v2"
   ],
-  "primaryFeature": "wow-features",
+  "primaryFeature": "wow-features-v2",
   "features": {
     "wow-features": {
       "phase": "act",
@@ -27,6 +28,28 @@
         "lastUpdated": "2026-02-22T13:00:00.000Z"
       }
     },
+    "wow-features-v2": {
+      "phase": "completed",
+      "phaseNumber": 5,
+      "matchRate": 97,
+      "iterationCount": 0,
+      "requirements": [
+        "F-07 샘플 코드 즉시 분석",
+        "F-08 LearningGuide 체크박스",
+        "F-09 통계 카운트업 애니메이션",
+        "F-10 훅 번역 카드 탭",
+        "F-11 패턴 동기부여 카드",
+        "F-12 복잡도 이유 툴팁"
+      ],
+      "documents": {
+        "plan": "docs/01-plan/features/wow-features-v2.plan.md",
+        "design": "docs/02-design/features/wow-features-v2.design.md"
+      },
+      "timestamps": {
+        "started": "2026-02-22T14:00:00.000Z",
+        "lastUpdated": "2026-02-22T14:00:00.000Z"
+      }
+    },
     "srcxray": {
       "phase": "do",
       "phaseNumber": 3,
@@ -36,9 +59,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T12:37:33.055Z",
-        "lastUpdated": "2026-02-22T13:37:43.280Z"
+        "lastUpdated": "2026-02-22T14:01:49.386Z"
       },
-      "lastFile": "C:/Users/jooladen/Desktop/cluade-code2/srcxray/src/lib/tldr.ts"
+      "lastFile": "C:/Users/jooladen/Desktop/cluade-code2/srcxray/src/app/page.tsx"
     }
   },
   "pipeline": {
@@ -49,7 +72,7 @@
   "session": {
     "startedAt": "2026-02-22T12:26:53.171Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-02-22T13:37:43.280Z"
+    "lastActivity": "2026-02-22T14:01:49.386Z"
   },
   "history": [
     {
@@ -216,6 +239,90 @@
     },
     {
       "timestamp": "2026-02-22T13:37:43.280Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-22T13:58:02.223Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-22T13:58:06.511Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-22T13:58:20.876Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-22T13:58:24.581Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-22T13:58:40.893Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-22T13:58:45.718Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-22T13:58:52.843Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-22T13:59:00.707Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-22T13:59:04.146Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-22T13:59:38.011Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-22T14:00:11.032Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-22T14:00:26.302Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-22T14:00:53.368Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-22T14:01:49.386Z",
       "feature": "srcxray",
       "phase": "do",
       "action": "updated"

@@ -9,6 +9,7 @@ export interface FileTldr {
   summary: string;
   role: string[];
   badges: TldrBadge[];
+  motivations: string[];
 }
 
 export function generateTldr(result: Pick<AnalysisResult, 'imports' | 'components' | 'hooks' | 'totalLines' | 'functions'>): FileTldr {
@@ -74,5 +75,16 @@ export function generateTldr(result: Pick<AnalysisResult, 'imports' | 'component
   if (effectCount > 0) badges.push({ label: `🔄 useEffect ${effectCount}개`, color: 'orange' });
   badges.push({ label: `📏 ${totalLines}줄`, color: 'gray' });
 
-  return { summary, role: roles, badges };
+  // Motivations
+  const motivations: string[] = [];
+  if (hasForm && hasAuth)   motivations.push('🔐 회원가입·로그인 시스템');
+  if (hasForm)              motivations.push('📝 설문조사·문의 폼');
+  if (hasList && hasFetch)  motivations.push('📰 뉴스 피드·상품 목록');
+  if (hasList && hasSearch) motivations.push('🔍 검색 기능 있는 앱');
+  if (hasModal)             motivations.push('💬 알림·팝업 UI');
+  if (hasRouter)            motivations.push('🗺️ 멀티페이지 앱');
+  if (hasFetch)             motivations.push('🌐 실시간 데이터 앱');
+  if (motivations.length === 0) motivations.push('🧩 재사용 가능한 UI 컴포넌트');
+
+  return { summary, role: roles, badges, motivations };
 }

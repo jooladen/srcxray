@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { LearningSection } from '@/lib/parser';
 
 function TimeBar({ minutes, total }: { minutes: number; total: number }) {
@@ -16,6 +17,16 @@ function TimeBar({ minutes, total }: { minutes: number; total: number }) {
 
 export default function LearningGuide({ sections }: { sections: LearningSection[] }) {
   const totalMinutes = sections.reduce((s, sec) => s + sec.minutes, 0);
+  const [checked, setChecked] = useState<Set<number>>(new Set());
+
+  const toggle = (i: number) => setChecked(prev => {
+    const next = new Set(prev);
+    next.has(i) ? next.delete(i) : next.add(i);
+    return next;
+  });
+
+  const allDone = sections.length > 0 && checked.size === sections.length;
+  const progressPct = sections.length ? (checked.size / sections.length) * 100 : 0;
 
   if (sections.length === 0) {
     return <p className="text-gray-400 text-sm text-center py-4">코드를 분석하면 학습 가이드가 생성됩니다.</p>;
@@ -40,26 +51,64 @@ export default function LearningGuide({ sections }: { sections: LearningSection[
       {/* Progress tracker */}
       <div className="flex gap-1">
         {sections.map((_, i) => (
-          <div key={i} className="flex-1 h-1.5 bg-gray-200 rounded-full">
-            <div className="h-1.5 bg-blue-400 rounded-full w-0" />
+          <div key={i} className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-1.5 rounded-full transition-all duration-500"
+              style={{
+                width: checked.has(i) ? '100%' : '0%',
+                backgroundColor: '#60a5fa',
+              }}
+            />
           </div>
         ))}
       </div>
 
+      {/* Overall progress bar */}
+      <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+        <div
+          className="h-1.5 bg-blue-400 rounded-full transition-all duration-500"
+          style={{ width: `${progressPct}%` }}
+        />
+      </div>
+
+      {/* Completion banner */}
+      {allDone && (
+        <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl p-4 text-center">
+          <div className="text-2xl mb-1">🎉</div>
+          <p className="font-bold">와! 이 파일 완전히 파악했어요!</p>
+          <p className="text-sm text-green-100">개발자 맞죠? 다음 파일도 분석해보세요!</p>
+        </div>
+      )}
+
       {/* Sections */}
       <div className="space-y-3">
         {sections.map((sec, i) => (
-          <div key={i} className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-sm transition-all bg-white">
+          <div
+            key={i}
+            onClick={() => toggle(i)}
+            className={`border rounded-xl p-4 cursor-pointer transition-all select-none
+              ${checked.has(i)
+                ? 'border-green-400 bg-green-50 shadow-sm'
+                : 'border-gray-200 hover:border-blue-300 hover:shadow-sm bg-white'
+              }`}
+          >
             <div className="flex items-start gap-3">
-              {/* Step number */}
-              <div className="shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                {sec.order}
+              {/* Step number / check */}
+              <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all
+                ${checked.has(i)
+                  ? 'bg-green-500 text-white'
+                  : 'bg-blue-600 text-white'
+                }`}
+              >
+                {checked.has(i) ? '✓' : sec.order}
               </div>
               <div className="flex-1 min-w-0">
                 {/* Title */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xl">{sec.emoji}</span>
-                  <h4 className="font-bold text-gray-800">{sec.title}</h4>
+                  <h4 className={`font-bold ${checked.has(i) ? 'text-green-700 line-through' : 'text-gray-800'}`}>
+                    {sec.title}
+                  </h4>
                   {sec.lineHint && (
                     <code className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full ml-auto">
                       📍 {sec.lineHint}

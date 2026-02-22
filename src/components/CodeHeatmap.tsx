@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { computeLineComplexity, getLineScore } from '@/lib/complexity';
+import { computeLineComplexity, getLineScoreWithReasons } from '@/lib/complexity';
 
 interface Props {
   code: string;
@@ -44,14 +44,14 @@ export default function CodeHeatmap({ code }: Props) {
         <div className="max-h-[500px] overflow-y-auto">
           {lines.map((line, i) => {
             const score = scores[i] ?? 0;
-            const ls    = getLineScore(score);
+            const ls    = getLineScoreWithReasons(score, line);
             const lineNum = i + 1;
             const isHovered = hoveredLine === lineNum;
 
             return (
               <div
                 key={i}
-                className={`flex items-stretch text-xs font-mono group cursor-default transition-colors ${isHovered ? 'bg-gray-800' : ''}`}
+                className={`flex items-stretch text-xs font-mono group cursor-default transition-colors relative ${isHovered ? 'bg-gray-800' : ''}`}
                 onMouseEnter={() => setHoveredLine(lineNum)}
                 onMouseLeave={() => setHoveredLine(null)}
               >
@@ -84,7 +84,20 @@ export default function CodeHeatmap({ code }: Props) {
                 </pre>
 
                 {/* Tooltip */}
-                {isHovered && score > 0 && (
+                {isHovered && score > 2 && (
+                  <div className="absolute right-0 top-full z-20 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl max-w-xs whitespace-normal border border-gray-700 mt-0.5">
+                    <div className="font-bold mb-1" style={{ color: ls.borderColor }}>
+                      {ls.label} ({score}점)
+                    </div>
+                    {ls.reasons.length > 0
+                      ? ls.reasons.map((r, ri) => (
+                          <div key={ri} className="opacity-80">• {r}</div>
+                        ))
+                      : <div className="opacity-60">들여쓰기가 깊어요</div>
+                    }
+                  </div>
+                )}
+                {isHovered && score > 0 && score <= 2 && (
                   <div className="shrink-0 flex items-center px-2 text-gray-500 text-xs border-l border-gray-800">
                     {ls.label} ({score}점)
                   </div>

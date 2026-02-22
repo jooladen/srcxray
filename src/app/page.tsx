@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import type { AnalysisResult } from '@/lib/parser';
 import type { FileTldr } from '@/lib/tldr';
+import { SAMPLES } from '@/lib/samples';
 
 const CodeInput     = dynamic(() => import('@/components/CodeInput'),     { ssr: false });
 const TldrCard      = dynamic(() => import('@/components/TldrCard'),      { ssr: false });
@@ -13,6 +14,7 @@ const FunctionList  = dynamic(() => import('@/components/FunctionList'),  { ssr:
 const LearningGuide = dynamic(() => import('@/components/LearningGuide'), { ssr: false });
 const FlowDiagram   = dynamic(() => import('@/components/FlowDiagram'),   { ssr: false });
 const CodeHeatmap   = dynamic(() => import('@/components/CodeHeatmap'),   { ssr: false });
+const HookCards     = dynamic(() => import('@/components/HookCards'),     { ssr: false });
 
 const COMPLEXITY_META = {
   simple:   { label: '단순',  color: 'bg-green-100 text-green-700',  desc: '금방 파악 가능' },
@@ -20,15 +22,16 @@ const COMPLEXITY_META = {
   complex:  { label: '복잡',  color: 'bg-red-100 text-red-700',      desc: '섹션별로 나눠서 분석' },
 };
 
-type TabKey = 'guide' | 'components' | 'flow' | 'imports' | 'functions' | 'heatmap';
+type TabKey = 'guide' | 'components' | 'flow' | 'imports' | 'functions' | 'heatmap' | 'hooks';
 
 const TABS: { key: TabKey; label: string; emoji: string }[] = [
   { key: 'guide',      label: '10분 가이드', emoji: '📚' },
   { key: 'components', label: '컴포넌트',    emoji: '🧩' },
   { key: 'flow',       label: '데이터 흐름', emoji: '🌊' },
-  { key: 'heatmap',   label: '복잡도 맵',  emoji: '🔥' },
-  { key: 'imports',    label: 'Import 맵',  emoji: '📦' },
-  { key: 'functions',  label: '함수 목록',  emoji: '🔧' },
+  { key: 'heatmap',    label: '복잡도 맵',   emoji: '🔥' },
+  { key: 'hooks',      label: '훅 번역',     emoji: '⚡' },
+  { key: 'imports',    label: 'Import 맵',   emoji: '📦' },
+  { key: 'functions',  label: '함수 목록',   emoji: '🔧' },
 ];
 
 function formatTime(seconds: number): string {
@@ -41,6 +44,33 @@ function getAchievement(seconds: number, lines: number): string {
   if (seconds < 180) return `🚀 ${formatTime(seconds)} 만에 ${lines}줄 분석! 천재인가요?`;
   if (seconds < 600) return `👏 ${formatTime(seconds)} — 목표 달성! 10분 안에 성공!`;
   return `💪 ${formatTime(seconds)} — 끝까지 완주! 다음엔 더 빠를 거예요!`;
+}
+
+function useCountUp(target: number, duration = 600) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (target === 0) { setValue(0); return; }
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 4);
+      setValue(Math.round(eased * target));
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [target, duration]);
+  return value;
+}
+
+function AnimatedStat({ value, label, emoji, color }: { value: number; label: string; emoji: string; color: string }) {
+  const animated = useCountUp(value);
+  return (
+    <div className={`border rounded-xl p-4 text-center ${color}`}>
+      <div className="text-2xl">{emoji}</div>
+      <div className="text-2xl font-black tabular-nums">{animated}</div>
+      <div className="text-xs font-medium opacity-70">{label}</div>
+    </div>
+  );
 }
 
 export default function Home() {
@@ -162,25 +192,17 @@ export default function Home() {
 
         {result && !isLoading && (
           <>
-            {/* TL;DR Card (F-01 + F-05) */}
+            {/* TL;DR Card (F-01 + F-05 + F-11) */}
             {tldr && (
               <TldrCard tldr={tldr} result={result} fileName={fileName} />
             )}
 
-            {/* Stats */}
+            {/* Stats (F-09: CountUp animation) */}
             <div className="grid grid-cols-4 gap-3">
-              {[
-                { label: '전체 줄',  value: result.totalLines,        emoji: '📏', color: 'bg-blue-50 border-blue-200 text-blue-700' },
-                { label: '컴포넌트', value: result.components.length, emoji: '🧩', color: 'bg-purple-50 border-purple-200 text-purple-700' },
-                { label: '훅',       value: result.hooks.length,      emoji: '⚡', color: 'bg-orange-50 border-orange-200 text-orange-700' },
-                { label: 'Import',   value: result.imports.length,    emoji: '📦', color: 'bg-green-50 border-green-200 text-green-700' },
-              ].map(stat => (
-                <div key={stat.label} className={`border rounded-xl p-4 text-center ${stat.color}`}>
-                  <div className="text-2xl">{stat.emoji}</div>
-                  <div className="text-2xl font-black">{stat.value}</div>
-                  <div className="text-xs font-medium opacity-70">{stat.label}</div>
-                </div>
-              ))}
+              <AnimatedStat value={result.totalLines}        label="전체 줄"  emoji="📏" color="bg-blue-50 border-blue-200 text-blue-700" />
+              <AnimatedStat value={result.components.length} label="컴포넌트" emoji="🧩" color="bg-purple-50 border-purple-200 text-purple-700" />
+              <AnimatedStat value={result.hooks.length}      label="훅"       emoji="⚡" color="bg-orange-50 border-orange-200 text-orange-700" />
+              <AnimatedStat value={result.imports.length}    label="Import"   emoji="📦" color="bg-green-50 border-green-200 text-green-700" />
             </div>
 
             {/* Tabs */}
@@ -201,6 +223,7 @@ export default function Home() {
                     {tab.key === 'components' && <span className="bg-gray-200 text-gray-600 text-xs px-1.5 rounded-full">{result.components.length}</span>}
                     {tab.key === 'imports'    && <span className="bg-gray-200 text-gray-600 text-xs px-1.5 rounded-full">{result.imports.length}</span>}
                     {tab.key === 'functions'  && <span className="bg-gray-200 text-gray-600 text-xs px-1.5 rounded-full">{result.functions.length}</span>}
+                    {tab.key === 'hooks'      && <span className="bg-gray-200 text-gray-600 text-xs px-1.5 rounded-full">{result.hooks.length}</span>}
                   </button>
                 ))}
               </div>
@@ -209,7 +232,8 @@ export default function Home() {
                 {activeTab === 'guide'      && <LearningGuide sections={result.learningGuide} />}
                 {activeTab === 'components' && <ComponentTree components={result.components} />}
                 {activeTab === 'flow'       && <FlowDiagram result={result} />}
-                {activeTab === 'heatmap'   && <CodeHeatmap code={code} />}
+                {activeTab === 'heatmap'    && <CodeHeatmap code={code} />}
+                {activeTab === 'hooks'      && <HookCards hooks={result.hooks} />}
                 {activeTab === 'imports'    && <ImportMap imports={result.imports} />}
                 {activeTab === 'functions'  && <FunctionList functions={result.functions} />}
               </div>
@@ -218,10 +242,29 @@ export default function Home() {
         )}
 
         {!result && !isLoading && (
-          <div className="text-center py-16 text-gray-400">
+          <div className="text-center py-12 text-gray-400">
             <div className="text-6xl mb-4">🔬</div>
             <p className="text-xl font-medium text-gray-500">TSX 파일을 업로드하거나 코드를 붙여넣기 하세요</p>
-            <p className="text-sm mt-2">샘플 코드로 먼저 테스트해볼 수 있습니다</p>
+
+            {/* F-07: 샘플 버튼 */}
+            <div className="mt-6">
+              <p className="text-sm text-gray-500 mb-3">또는 샘플로 바로 체험해보세요 👇</p>
+              <div className="flex gap-3 justify-center flex-wrap">
+                {SAMPLES.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => handleAnalyze(s.code, s.title + '.tsx')}
+                    className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-blue-400 hover:shadow-md hover:scale-105 transition-all text-left"
+                  >
+                    <span className="text-2xl">{s.emoji}</span>
+                    <div>
+                      <div className="font-bold text-gray-800 text-sm">{s.title}</div>
+                      <div className="text-xs text-gray-500">{s.desc}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </main>

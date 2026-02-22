@@ -62,6 +62,23 @@ export default function TldrCard({ tldr, result, fileName }: Props) {
               </span>
             ))}
           </div>
+
+          {/* Motivations */}
+          {tldr.motivations.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-white/20">
+              <div className="text-blue-200 text-xs font-semibold mb-1.5">
+                📌 이 패턴 마스터하면 만들 수 있어요 →
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {tldr.motivations.map((m, i) => (
+                  <span key={i}
+                    className="text-xs bg-white/20 hover:bg-white/30 transition-colors px-2.5 py-1 rounded-full font-medium cursor-default">
+                    {m}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Copy button (F-05) */}
