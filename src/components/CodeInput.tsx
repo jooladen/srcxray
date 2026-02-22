@@ -186,7 +186,7 @@ export default function CodeInput({ onAnalyze, isLoading, code, fileName, onCode
         </button>
         {code && (
           <button
-            onClick={() => { onCodeChange(''); onFileNameChange(''); }}
+            onClick={() => { onReset(); onCodeChange(''); onFileNameChange(''); }}
             className="px-5 py-3 border-2 border-red-200 hover:border-red-400 text-red-500 font-medium rounded-xl transition-colors"
           >
             지우기
