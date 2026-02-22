@@ -5,6 +5,10 @@ import { useRef, useState } from 'react';
 interface Props {
   onAnalyze: (code: string, fileName: string) => void;
   isLoading: boolean;
+  code: string;
+  fileName: string;
+  onCodeChange: (code: string) => void;
+  onFileNameChange: (name: string) => void;
 }
 
 const SAMPLE_CODE = `import React, { useState, useEffect } from 'react';
@@ -65,20 +69,26 @@ export default function UserList({ title = '사용자 목록', maxItems = 10 }: 
   );
 }`;
 
-export default function CodeInput({ onAnalyze, isLoading }: Props) {
-  const [code, setCode] = useState('');
-  const [fileName, setFileName] = useState('');
+export default function CodeInput({ onAnalyze, isLoading, code, fileName, onCodeChange, onFileNameChange }: Props) {
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lineNumRef = useRef<HTMLDivElement>(null);
+
+  const syncScroll = () => {
+    if (lineNumRef.current && textareaRef.current) {
+      lineNumRef.current.scrollTop = textareaRef.current.scrollTop;
+    }
+  };
 
   const handleFile = (file: File) => {
     if (!file.name.match(/\.(tsx?|jsx?)$/)) {
       alert('TSX, TypeScript, JSX 파일만 지원합니다.');
       return;
     }
-    setFileName(file.name);
+    onFileNameChange(file.name);
     const reader = new FileReader();
-    reader.onload = e => setCode(e.target?.result as string ?? '');
+    reader.onload = e => onCodeChange(e.target?.result as string ?? '');
     reader.readAsText(file);
   };
 
@@ -90,8 +100,8 @@ export default function CodeInput({ onAnalyze, isLoading }: Props) {
   };
 
   const loadSample = () => {
-    setCode(SAMPLE_CODE);
-    setFileName('UserList.tsx (샘플)');
+    onCodeChange(SAMPLE_CODE);
+    onFileNameChange('UserList.tsx (샘플)');
   };
 
   return (
@@ -125,17 +135,32 @@ export default function CodeInput({ onAnalyze, isLoading }: Props) {
         </div>
       )}
 
-      {/* Textarea */}
-      <div className="relative">
-        <textarea
-          value={code}
-          onChange={e => setCode(e.target.value)}
-          placeholder="또는 TSX 코드를 여기에 직접 붙여넣기 (Ctrl+V)..."
-          className="w-full h-56 p-4 border rounded-xl font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-950 text-green-400 placeholder-gray-600"
-          spellCheck={false}
-        />
+      {/* Textarea with line numbers */}
+      <div className="relative border rounded-xl overflow-hidden bg-gray-950 focus-within:ring-2 focus-within:ring-blue-400">
+        <div className="flex h-56">
+          {/* Line numbers */}
+          <div
+            ref={lineNumRef}
+            className="select-none text-right py-4 px-3 font-mono text-xs text-gray-500 bg-gray-900 border-r border-gray-700 overflow-hidden shrink-0"
+            style={{ minWidth: '3rem' }}
+          >
+            {(code || ' ').split('\n').map((_, i) => (
+              <div key={i} className="leading-5">{i + 1}</div>
+            ))}
+          </div>
+          {/* Textarea */}
+          <textarea
+            ref={textareaRef}
+            value={code}
+            onChange={e => onCodeChange(e.target.value)}
+            onScroll={syncScroll}
+            placeholder="또는 TSX 코드를 여기에 직접 붙여넣기 (Ctrl+V)..."
+            className="flex-1 py-4 px-3 font-mono text-sm resize-none focus:outline-none bg-gray-950 text-green-400 placeholder-gray-600 leading-5"
+            spellCheck={false}
+          />
+        </div>
         {code && (
-          <span className="absolute bottom-2 right-3 text-xs text-gray-500">
+          <span className="absolute bottom-2 right-3 text-xs text-gray-600 pointer-events-none">
             {code.split('\n').length}줄
           </span>
         )}
@@ -158,7 +183,7 @@ export default function CodeInput({ onAnalyze, isLoading }: Props) {
         </button>
         {code && (
           <button
-            onClick={() => { setCode(''); setFileName(''); }}
+            onClick={() => { onCodeChange(''); onFileNameChange(''); }}
             className="px-5 py-3 border-2 border-red-200 hover:border-red-400 text-red-500 font-medium rounded-xl transition-colors"
           >
             지우기

@@ -72,6 +72,50 @@ function extractText(node: Node): string {
   return '';
 }
 
+// Extracts a human-readable param name, supporting destructured patterns
+function extractParamName(node: Node): string {
+  if (!node) return '';
+  // Identifier: simple name
+  if ('name' in node && typeof (node as { name: string }).name === 'string') return (node as { name: string }).name;
+  // AssignmentPattern: param = default → use left side (e.g. { title = 'x' })
+  if (node.type === 'AssignmentPattern') {
+    return extractParamName((node as unknown as { left: Node }).left);
+  }
+  // ObjectPattern: { a, b } → extract each key name individually
+  if (node.type === 'ObjectPattern') {
+    const props = (node as unknown as { properties: Array<{ type: string; key?: Node; argument?: Node }> }).properties;
+    const names = props.map(p => {
+      if (p.type === 'RestElement') return p.argument ? `...${extractParamName(p.argument)}` : '';
+      return p.key ? extractText(p.key) : '';
+    }).filter(Boolean);
+    return names.join(',') ; // caller will split by ','
+  }
+  // RestElement: ...name
+  if (node.type === 'RestElement') {
+    return `...${extractParamName((node as unknown as { argument: Node }).argument)}`;
+  }
+  // ArrayPattern: [a, b]
+  if (node.type === 'ArrayPattern') {
+    const elems = (node as unknown as { elements: (Node | null)[] }).elements;
+    const names = elems.map(e => e ? extractParamName(e) : '').filter(Boolean);
+    return names.length > 0 ? `[${names.join(', ')}]` : '';
+  }
+  return '';
+}
+
+// Extracts param names, expanding ObjectPattern into individual prop names
+function extractParamNames(node: Node): string[] {
+  if (node.type === 'ObjectPattern') {
+    const props = (node as unknown as { properties: Array<{ type: string; key?: Node; argument?: Node }> }).properties;
+    return props.map(p => {
+      if (p.type === 'RestElement') return p.argument ? `...${extractParamName(p.argument)}` : '';
+      return p.key ? extractText(p.key) : '';
+    }).filter(Boolean);
+  }
+  const name = extractParamName(node);
+  return name ? [name] : [];
+}
+
 function getJsxTagsFromBody(body: Node[]): string[] {
   const tags = new Set<string>();
   function walk(n: Node) {
@@ -95,6 +139,7 @@ function extractHooksFromBody(body: Node[]): HookCall[] {
   const hooks: HookCall[] = [];
   function walk(n: Node) {
     if (!n || typeof n !== 'object') return;
+    // Case 1: const [x, setX] = useState(...) / const x = useQuery(...)
     if (
       n.type === 'VariableDeclaration' &&
       (n as { declarations: Node[] }).declarations?.length > 0
@@ -122,6 +167,28 @@ function extractHooksFromBody(body: Node[]): HookCall[] {
                 const elems = (dep as { elements: (Node | null)[] }).elements;
                 hook.deps = '[' + elems.map(e => e ? extractText(e) : '').join(', ') + ']';
               }
+            }
+          }
+          hooks.push(hook);
+        }
+      }
+    }
+    // Case 2: useEffect(() => {}, []) — standalone expression (no variable assignment)
+    if (n.type === 'ExpressionStatement') {
+      const expr = (n as unknown as { expression: Node }).expression;
+      if (expr && (expr as { type: string }).type === 'CallExpression') {
+        const callee = (expr as { callee: Node }).callee;
+        const hookName = extractText(callee);
+        if (hookName.startsWith('use') && !['useState'].includes(hookName)) {
+          const loc = (n as { loc?: { start: { line: number } } }).loc;
+          const hook: HookCall = { name: hookName, line: loc?.start.line ?? 0 };
+          // deps array (useEffect, useLayoutEffect, etc.)
+          const args = (expr as { arguments: Node[] }).arguments;
+          if (args?.length > 1) {
+            const dep = args[1];
+            if (dep.type === 'ArrayExpression') {
+              const elems = (dep as { elements: (Node | null)[] }).elements;
+              hook.deps = '[' + elems.map(e => e ? extractText(e) : '').join(', ') + ']';
             }
           }
           hooks.push(hook);
@@ -194,7 +261,8 @@ export function analyzeCode(code: string): AnalysisResult {
       const decl = node.declaration as Node & { id?: { name: string }; name?: string };
       exports.push('default: ' + (decl.id?.name ?? decl.name ?? 'anonymous'));
       // Also extract exported function/component
-      if ((decl as unknown as { type: string }).type === 'FunctionDeclaration') {
+      const declType = (decl as unknown as { type: string }).type;
+      if (declType === 'FunctionDeclaration') {
         const fd = decl as unknown as {
           id?: { name: string }; body?: { body: Node[] };
           async?: boolean; params?: Node[];
@@ -204,7 +272,7 @@ export function analyzeCode(code: string): AnalysisResult {
         const body = fd.body?.body ?? [];
         const jsxTags = getJsxTagsFromBody(body);
         const hooks = extractHooksFromBody(body);
-        const params = (fd.params ?? []).map(p => extractText(p)).filter(Boolean);
+        const params = (fd.params ?? []).flatMap(p => extractParamNames(p)).filter(Boolean);
         const fn: FunctionItem = {
           name, kind: 'function',
           params, isAsync: fd.async ?? false,
@@ -215,6 +283,29 @@ export function analyzeCode(code: string): AnalysisResult {
         functions.push(fn);
         if (fn.isComponent) {
           components.push({ name, kind: 'function', props: params, hooks, jsxTags, startLine: fn.startLine, endLine: fn.endLine });
+        }
+      } else if (declType === 'ArrowFunctionExpression') {
+        // export default () => <Component />
+        const af = decl as unknown as {
+          async?: boolean; params?: Node[];
+          body?: { body?: Node[] };
+          loc?: { start: { line: number }; end: { line: number } };
+        };
+        const body = af.body?.body ?? [af.body as unknown as Node];
+        const jsxTags = getJsxTagsFromBody(body);
+        if (jsxTags.length > 0) {
+          const name = 'DefaultExport';
+          const params = (af.params ?? []).flatMap(p => extractParamNames(p)).filter(Boolean);
+          const hooks = extractHooksFromBody(body);
+          const fn: FunctionItem = {
+            name, kind: 'arrow',
+            params, isAsync: af.async ?? false,
+            isComponent: true,
+            startLine: af.loc?.start.line ?? 0,
+            endLine: af.loc?.end.line ?? 0,
+          };
+          functions.push(fn);
+          components.push({ name, kind: 'arrow', props: params, hooks, jsxTags, startLine: fn.startLine, endLine: fn.endLine });
         }
       }
     }
@@ -243,7 +334,7 @@ export function analyzeCode(code: string): AnalysisResult {
             const body = fd.body?.body ?? [];
             const jsxTags = getJsxTagsFromBody(body);
             const hooks = extractHooksFromBody(body);
-            const params = (fd.params ?? []).map(p => extractText(p)).filter(Boolean);
+            const params = (fd.params ?? []).flatMap(p => extractParamNames(p)).filter(Boolean);
             const fn: FunctionItem = {
               name, kind: 'function',
               params, isAsync: fd.async ?? false,
@@ -269,7 +360,7 @@ export function analyzeCode(code: string): AnalysisResult {
               const body = init.body?.body ?? [];
               const jsxTags = getJsxTagsFromBody(body.length ? body : [init.body as unknown as Node]);
               const hooks = extractHooksFromBody(body.length ? body : [init.body as unknown as Node]);
-              const params = (init.params ?? []).map(p => extractText(p)).filter(Boolean);
+              const params = (init.params ?? []).flatMap(p => extractParamNames(p)).filter(Boolean);
               const fn: FunctionItem = {
                 name, kind: 'arrow',
                 params, isAsync: init.async ?? false,
@@ -293,7 +384,7 @@ export function analyzeCode(code: string): AnalysisResult {
       const body = node.body?.body ?? [];
       const jsxTags = getJsxTagsFromBody(body);
       const hooks = extractHooksFromBody(body);
-      const params = node.params.map(p => extractText(p)).filter(Boolean);
+      const params = node.params.flatMap(p => extractParamNames(p)).filter(Boolean);
       const loc = node.loc;
       const fn: FunctionItem = {
         name, kind: 'function',
@@ -318,7 +409,7 @@ export function analyzeCode(code: string): AnalysisResult {
           const body = init.body?.body ?? [];
           const jsxTags = getJsxTagsFromBody(body.length ? body : [init.body as unknown as Node]);
           const hooks = extractHooksFromBody(body.length ? body : [init.body as unknown as Node]);
-          const params = (init.params ?? []).map(p => extractText(p)).filter(Boolean);
+          const params = (init.params ?? []).flatMap(p => extractParamNames(p)).filter(Boolean);
           const loc = node.loc;
           const fn: FunctionItem = {
             name, kind: 'arrow',

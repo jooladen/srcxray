@@ -94,7 +94,7 @@ const CONCEPT_DEFS = [
   },
 ];
 
-export function findConcepts(code: string, _result: AnalysisResult): ConceptItem[] {
+export function findConcepts(code: string, _result?: AnalysisResult): ConceptItem[] {
   const codeLines = code.split('\n');
   const found: ConceptItem[] = [];
 

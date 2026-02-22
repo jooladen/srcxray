@@ -23,10 +23,14 @@ export default function TldrCard({ tldr, result, fileName }: Props) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    const text = generateMarkdownReport(result, tldr, fileName);
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      const text = generateMarkdownReport(result, tldr, fileName);
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard unavailable (e.g. plain HTTP context) — silently ignore
+    }
   };
 
   return (

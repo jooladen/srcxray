@@ -17,19 +17,21 @@ export function detectDangers(code: string, result: AnalysisResult): DangerItem[
   const lines = code.split('\n');
 
   // D-01: useEffect(async () => ...) — async 직접 사용
+  const asyncEffectLines: number[] = [];
   lines.forEach((line, i) => {
-    if (/useEffect\s*\(\s*async/.test(line)) {
-      dangers.push({
-        id: 'async-effect',
-        level: 'medium',
-        emoji: '🔄',
-        title: 'useEffect에 async 직접 사용',
-        description: '비동기 함수를 직접 전달하면 클린업이 불가능하고 메모리 누수가 생길 수 있어요',
-        solution: 'useEffect 내부에 async 함수를 별도로 선언하고 호출하세요',
-        lines: [i + 1],
-      });
-    }
+    if (/useEffect\s*\(\s*async/.test(line)) asyncEffectLines.push(i + 1);
   });
+  if (asyncEffectLines.length > 0) {
+    dangers.push({
+      id: 'async-effect',
+      level: 'medium',
+      emoji: '🔄',
+      title: 'useEffect에 async 직접 사용',
+      description: '비동기 함수를 직접 전달하면 클린업이 불가능하고 메모리 누수가 생길 수 있어요',
+      solution: 'useEffect 내부에 async 함수를 별도로 선언하고 호출하세요',
+      lines: asyncEffectLines,
+    });
+  }
 
   // D-02: .map() 안에 key 없음
   lines.forEach((line, i) => {

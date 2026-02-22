@@ -42,9 +42,9 @@ function NodeCard({
 
   return (
     <div
-      className={`border-2 rounded-xl px-3 py-2 text-xs font-mono font-semibold cursor-default transition-all select-none
+      className={`border-2 rounded-xl px-3 py-2 text-xs font-mono font-semibold cursor-default transition-all duration-150 ease-out select-none
         ${meta.bg} ${meta.color}
-        ${isHover ? 'shadow-md scale-105 ring-2 ring-offset-1 ring-blue-400' : 'hover:shadow-sm hover:scale-102'}
+        ${isHover ? 'shadow-lg ring-2 ring-blue-400 brightness-95' : 'hover:shadow-sm'}
       `}
       onMouseEnter={() => onHover(connected)}
       onMouseLeave={() => onHover(null)}

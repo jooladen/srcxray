@@ -33,7 +33,7 @@ export function generateMarkdownReport(
         c.hooks.forEach(h => {
           const exp = getHookExplanation(h);
           if (h.name === 'useState') {
-            lines.push(`  - \`${h.stateVar}\` ${exp.emoji} — ${exp.plain}`);
+            lines.push(`  - \`${h.stateVar ?? '(unnamed)'}\` ${exp.emoji} — ${exp.plain}`);
           } else {
             lines.push(`  - \`${h.name}\` ${exp.emoji} — ${exp.plain}`);
           }

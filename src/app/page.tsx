@@ -55,15 +55,21 @@ function getAchievement(seconds: number, lines: number): string {
 function useCountUp(target: number, duration = 600) {
   const [value, setValue] = useState(0);
   useEffect(() => {
-    if (target === 0) { setValue(0); return; }
+    let cancelled = false;
+    if (target === 0) {
+      const id = requestAnimationFrame(() => { if (!cancelled) setValue(0); });
+      return () => { cancelled = true; cancelAnimationFrame(id); };
+    }
     const start = performance.now();
     const tick = (now: number) => {
+      if (cancelled) return;
       const t = Math.min((now - start) / duration, 1);
       const eased = 1 - Math.pow(1 - t, 4);
       setValue(Math.round(eased * target));
       if (t < 1) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
+    return () => { cancelled = true; };
   }, [target, duration]);
   return value;
 }
@@ -187,7 +193,14 @@ export default function Home() {
           <h2 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
             <span className="text-xl">📋</span> 코드 입력
           </h2>
-          <CodeInput onAnalyze={handleAnalyze} isLoading={isLoading} />
+          <CodeInput
+            onAnalyze={handleAnalyze}
+            isLoading={isLoading}
+            code={code}
+            fileName={fileName}
+            onCodeChange={setCode}
+            onFileNameChange={setFileName}
+          />
         </section>
 
         {isLoading && (
