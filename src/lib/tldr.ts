@@ -10,6 +10,7 @@ export interface FileTldr {
   role: string[];
   badges: TldrBadge[];
   motivations: string[];
+  dangerCount: number;
 }
 
 export function generateTldr(result: Pick<AnalysisResult, 'imports' | 'components' | 'hooks' | 'totalLines' | 'functions'>): FileTldr {
@@ -86,5 +87,5 @@ export function generateTldr(result: Pick<AnalysisResult, 'imports' | 'component
   if (hasFetch)             motivations.push('🌐 실시간 데이터 앱');
   if (motivations.length === 0) motivations.push('🧩 재사용 가능한 UI 컴포넌트');
 
-  return { summary, role: roles, badges, motivations };
+  return { summary, role: roles, badges, motivations, dangerCount: 0 };
 }

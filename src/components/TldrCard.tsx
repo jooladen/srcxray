@@ -63,6 +63,19 @@ export default function TldrCard({ tldr, result, fileName }: Props) {
             ))}
           </div>
 
+          {/* 위험 신호 뱃지 */}
+          <div className="mt-2">
+            {tldr.dangerCount === 0 ? (
+              <span className="text-xs bg-green-500/30 border border-green-400/40 text-white px-2.5 py-1 rounded-full font-semibold">
+                ✅ 위험 신호 없음
+              </span>
+            ) : (
+              <span className="text-xs bg-red-500/30 border border-red-400/40 text-white px-2.5 py-1 rounded-full font-semibold">
+                ⚠️ 위험 신호 {tldr.dangerCount}개
+              </span>
+            )}
+          </div>
+
           {/* Motivations */}
           {tldr.motivations.length > 0 && (
             <div className="mt-3 pt-3 border-t border-white/20">

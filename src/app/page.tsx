@@ -4,6 +4,8 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import type { AnalysisResult } from '@/lib/parser';
 import type { FileTldr } from '@/lib/tldr';
+import type { DangerItem } from '@/lib/danger-detector';
+import type { ConceptItem } from '@/lib/concept-finder';
 import { SAMPLES } from '@/lib/samples';
 
 const CodeInput     = dynamic(() => import('@/components/CodeInput'),     { ssr: false });
@@ -15,6 +17,8 @@ const LearningGuide = dynamic(() => import('@/components/LearningGuide'), { ssr:
 const FlowDiagram   = dynamic(() => import('@/components/FlowDiagram'),   { ssr: false });
 const CodeHeatmap   = dynamic(() => import('@/components/CodeHeatmap'),   { ssr: false });
 const HookCards     = dynamic(() => import('@/components/HookCards'),     { ssr: false });
+const DangerCard    = dynamic(() => import('@/components/DangerCard'),    { ssr: false });
+const ConceptCards  = dynamic(() => import('@/components/ConceptCards'),  { ssr: false });
 
 const COMPLEXITY_META = {
   simple:   { label: '단순',  color: 'bg-green-100 text-green-700',  desc: '금방 파악 가능' },
@@ -22,10 +26,12 @@ const COMPLEXITY_META = {
   complex:  { label: '복잡',  color: 'bg-red-100 text-red-700',      desc: '섹션별로 나눠서 분석' },
 };
 
-type TabKey = 'guide' | 'components' | 'flow' | 'imports' | 'functions' | 'heatmap' | 'hooks';
+type TabKey = 'guide' | 'components' | 'flow' | 'imports' | 'functions' | 'heatmap' | 'hooks' | 'danger' | 'concepts';
 
 const TABS: { key: TabKey; label: string; emoji: string }[] = [
   { key: 'guide',      label: '10분 가이드', emoji: '📚' },
+  { key: 'danger',     label: '위험 신호',   emoji: '⚠️' },
+  { key: 'concepts',   label: '필수 개념',   emoji: '📖' },
   { key: 'components', label: '컴포넌트',    emoji: '🧩' },
   { key: 'flow',       label: '데이터 흐름', emoji: '🌊' },
   { key: 'heatmap',    label: '복잡도 맵',   emoji: '🔥' },
@@ -80,6 +86,8 @@ export default function Home() {
   const [fileName, setFileName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('guide');
+  const [dangers,  setDangers]  = useState<DangerItem[]>([]);
+  const [concepts, setConcepts] = useState<ConceptItem[]>([]);
 
   // F-06: Timer
   const [elapsed,      setElapsed]    = useState(0);
@@ -104,16 +112,22 @@ export default function Home() {
     setElapsed(0);
     await new Promise(r => setTimeout(r, 50));
 
-    const [{ analyzeCode }, { generateTldr }] = await Promise.all([
+    const [{ analyzeCode }, { generateTldr }, { detectDangers }, { findConcepts }] = await Promise.all([
       import('@/lib/parser'),
       import('@/lib/tldr'),
+      import('@/lib/danger-detector'),
+      import('@/lib/concept-finder'),
     ]);
 
     const analysis = analyzeCode(inputCode);
     const fileTldr = generateTldr(analysis);
+    const dangerItems  = detectDangers(inputCode, analysis);
+    const conceptItems = findConcepts(inputCode, analysis);
 
     setResult(analysis);
-    setTldr(fileTldr);
+    setTldr({ ...fileTldr, dangerCount: dangerItems.length });
+    setDangers(dangerItems);
+    setConcepts(conceptItems);
     setActiveTab('guide');
     setTimerRunning(true);
     setIsLoading(false);
@@ -224,12 +238,17 @@ export default function Home() {
                     {tab.key === 'imports'    && <span className="bg-gray-200 text-gray-600 text-xs px-1.5 rounded-full">{result.imports.length}</span>}
                     {tab.key === 'functions'  && <span className="bg-gray-200 text-gray-600 text-xs px-1.5 rounded-full">{result.functions.length}</span>}
                     {tab.key === 'hooks'      && <span className="bg-gray-200 text-gray-600 text-xs px-1.5 rounded-full">{result.hooks.length}</span>}
+                    {tab.key === 'danger'   && dangers.length > 0  && <span className="bg-red-200 text-red-700 text-xs px-1.5 rounded-full">{dangers.length}</span>}
+                    {tab.key === 'danger'   && dangers.length === 0 && <span className="bg-green-200 text-green-700 text-xs px-1.5 rounded-full">✓</span>}
+                    {tab.key === 'concepts' && <span className="bg-gray-200 text-gray-600 text-xs px-1.5 rounded-full">{concepts.length}</span>}
                   </button>
                 ))}
               </div>
 
               <div className="p-6">
                 {activeTab === 'guide'      && <LearningGuide sections={result.learningGuide} />}
+                {activeTab === 'danger'     && <DangerCard dangers={dangers} />}
+                {activeTab === 'concepts'   && <ConceptCards concepts={concepts} hooks={result.hooks} />}
                 {activeTab === 'components' && <ComponentTree components={result.components} />}
                 {activeTab === 'flow'       && <FlowDiagram result={result} />}
                 {activeTab === 'heatmap'    && <CodeHeatmap code={code} />}
