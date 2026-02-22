@@ -203,7 +203,7 @@ export default function Home() {
           />
         </section>
 
-        {isLoading && (
+        {isLoading && !result && (
           <div className="text-center py-12">
             <div className="text-5xl animate-pulse mb-4">🔍</div>
             <p className="text-gray-500 font-medium">AST 파싱 중...</p>
@@ -217,7 +217,7 @@ export default function Home() {
           </div>
         )}
 
-        {result && !isLoading && (
+        {result && (
           <>
             {/* TL;DR Card (F-01 + F-05 + F-11) */}
             {tldr && (
