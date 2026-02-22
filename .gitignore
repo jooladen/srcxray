@@ -44,3 +44,5 @@ next-env.d.ts
 .bkit/
 docs/.pdca-status.json
 docs/.bkit-memory.json
+
+.vercel
