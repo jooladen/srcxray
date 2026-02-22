@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, Fragment } from 'react';
 import type { AnalysisResult } from '@/lib/parser';
 import { buildFlowGraph, groupByKind, edgesFrom, edgesTo } from '@/lib/flow';
 import type { FlowNode, FlowGraph } from '@/lib/flow';
@@ -124,6 +124,16 @@ export default function FlowDiagram({ result }: { result: AnalysisResult }) {
 
   return (
     <div className="space-y-5">
+      {/* Component being analyzed */}
+      {result.components.length > 0 && (
+        <div className="text-xs text-gray-500">
+          분석 대상: <code className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-blue-700">{comp.name}</code>
+          {result.components.length > 1 && (
+            <span className="ml-1 text-gray-400">(컴포넌트 {result.components.length}개 중 첫 번째)</span>
+          )}
+        </div>
+      )}
+
       {/* Legend */}
       <div className="flex flex-wrap gap-2 text-xs">
         {COLUMNS.map(k => (
@@ -136,38 +146,40 @@ export default function FlowDiagram({ result }: { result: AnalysisResult }) {
         </span>
       </div>
 
-      {/* Node columns — responsive: column on mobile, row on md+ */}
+      {/* Node columns — arrows are siblings at the outer flex-row level */}
       <div className="flex flex-col sm:flex-row items-start gap-2 overflow-x-auto">
         {COLUMNS.map((kind, ci) => (
-          <div key={kind} className="flex sm:flex-col items-center sm:items-start gap-2 flex-1 min-w-0">
-            {/* Column header */}
-            <div className={`text-xs font-bold uppercase tracking-wide shrink-0 px-2 py-1 rounded-lg ${KIND_META[kind].bg} ${KIND_META[kind].color}`}>
-              {KIND_META[kind].dot} {kind === 'prop' ? 'Props' : kind === 'state' ? 'State' : kind === 'effect' ? 'Effect' : 'JSX'}
+          <Fragment key={kind}>
+            <div className="flex sm:flex-col items-center sm:items-start gap-2 flex-1 min-w-0">
+              {/* Column header */}
+              <div className={`text-xs font-bold uppercase tracking-wide shrink-0 px-2 py-1 rounded-lg ${KIND_META[kind].bg} ${KIND_META[kind].color}`}>
+                {KIND_META[kind].dot} {kind === 'prop' ? 'Props' : kind === 'state' ? 'State' : kind === 'effect' ? 'Effect' : 'JSX'}
+              </div>
+
+              {/* Nodes */}
+              <div className="flex sm:flex-col gap-1.5 flex-wrap sm:flex-nowrap w-full">
+                {grouped[kind].length > 0
+                  ? grouped[kind].map(node => (
+                      <NodeCard
+                        key={node.id}
+                        node={node}
+                        graph={graph}
+                        highlighted={highlighted}
+                        onHover={ids => setHighlighted(ids ?? new Set())}
+                      />
+                    ))
+                  : <span className="text-xs text-gray-300 italic px-2">없음</span>
+                }
+              </div>
             </div>
 
-            {/* Nodes */}
-            <div className="flex sm:flex-col gap-1.5 flex-wrap sm:flex-nowrap w-full">
-              {grouped[kind].length > 0
-                ? grouped[kind].map(node => (
-                    <NodeCard
-                      key={node.id}
-                      node={node}
-                      graph={graph}
-                      highlighted={highlighted}
-                      onHover={ids => setHighlighted(ids ?? new Set())}
-                    />
-                  ))
-                : <span className="text-xs text-gray-300 italic px-2">없음</span>
-              }
-            </div>
-
-            {/* Column arrow (desktop only, between columns) */}
+            {/* Column arrow between columns — at the outer flex-row level */}
             {ci < COLUMNS.length - 1 && (
-              <div className="hidden sm:flex items-center self-start mt-7 text-gray-300 text-xl px-1 shrink-0">
+              <div className="hidden sm:flex items-center mt-8 text-gray-300 text-xl shrink-0">
                 →
               </div>
             )}
-          </div>
+          </Fragment>
         ))}
       </div>
 

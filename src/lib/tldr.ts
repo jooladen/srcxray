@@ -1,4 +1,4 @@
-import type { AnalysisResult, HookCall } from './parser';
+import type { AnalysisResult } from './parser';
 
 export interface TldrBadge {
   label: string;

@@ -193,6 +193,30 @@ export function analyzeCode(code: string): AnalysisResult {
     if (node.type === 'ExportDefaultDeclaration') {
       const decl = node.declaration as Node & { id?: { name: string }; name?: string };
       exports.push('default: ' + (decl.id?.name ?? decl.name ?? 'anonymous'));
+      // Also extract exported function/component
+      if ((decl as unknown as { type: string }).type === 'FunctionDeclaration') {
+        const fd = decl as unknown as {
+          id?: { name: string }; body?: { body: Node[] };
+          async?: boolean; params?: Node[];
+          loc?: { start: { line: number }; end: { line: number } };
+        };
+        const name = fd.id?.name ?? 'DefaultExport';
+        const body = fd.body?.body ?? [];
+        const jsxTags = getJsxTagsFromBody(body);
+        const hooks = extractHooksFromBody(body);
+        const params = (fd.params ?? []).map(p => extractText(p)).filter(Boolean);
+        const fn: FunctionItem = {
+          name, kind: 'function',
+          params, isAsync: fd.async ?? false,
+          isComponent: isLikelyComponent(name, body),
+          startLine: fd.loc?.start.line ?? 0,
+          endLine: fd.loc?.end.line ?? 0,
+        };
+        functions.push(fn);
+        if (fn.isComponent) {
+          components.push({ name, kind: 'function', props: params, hooks, jsxTags, startLine: fn.startLine, endLine: fn.endLine });
+        }
+      }
     }
     if (node.type === 'ExportNamedDeclaration') {
       if (node.specifiers.length > 0) {
@@ -204,6 +228,62 @@ export function analyzeCode(code: string): AnalysisResult {
         const d = node.declaration as Node & { id?: { name: string }; declarations?: { id: { name: string } }[] };
         if (d.id) exports.push(d.id.name);
         if (d.declarations) d.declarations.forEach(dec => exports.push(dec.id.name));
+      }
+      // Also extract exported function/component
+      if (node.declaration) {
+        const nd = node.declaration as Node & { type: string };
+        if (nd.type === 'FunctionDeclaration') {
+          const fd = node.declaration as unknown as {
+            id?: { name: string }; body?: { body: Node[] };
+            async?: boolean; params?: Node[];
+            loc?: { start: { line: number }; end: { line: number } };
+          };
+          const name = fd.id?.name;
+          if (name) {
+            const body = fd.body?.body ?? [];
+            const jsxTags = getJsxTagsFromBody(body);
+            const hooks = extractHooksFromBody(body);
+            const params = (fd.params ?? []).map(p => extractText(p)).filter(Boolean);
+            const fn: FunctionItem = {
+              name, kind: 'function',
+              params, isAsync: fd.async ?? false,
+              isComponent: isLikelyComponent(name, body),
+              startLine: fd.loc?.start.line ?? 0,
+              endLine: fd.loc?.end.line ?? 0,
+            };
+            functions.push(fn);
+            if (fn.isComponent) {
+              components.push({ name, kind: 'function', props: params, hooks, jsxTags, startLine: fn.startLine, endLine: fn.endLine });
+            }
+          }
+        } else if (nd.type === 'VariableDeclaration') {
+          const vd = node.declaration as unknown as {
+            declarations: { id: Node; init?: Node & { type: string; async?: boolean; params?: Node[]; body?: { body?: Node[] } } }[];
+            loc?: { start: { line: number }; end: { line: number } };
+          };
+          for (const decl of vd.declarations) {
+            const name = extractText(decl.id);
+            if (!name || !decl.init) continue;
+            const init = decl.init;
+            if (init.type === 'ArrowFunctionExpression' || init.type === 'FunctionExpression') {
+              const body = init.body?.body ?? [];
+              const jsxTags = getJsxTagsFromBody(body.length ? body : [init.body as unknown as Node]);
+              const hooks = extractHooksFromBody(body.length ? body : [init.body as unknown as Node]);
+              const params = (init.params ?? []).map(p => extractText(p)).filter(Boolean);
+              const fn: FunctionItem = {
+                name, kind: 'arrow',
+                params, isAsync: init.async ?? false,
+                isComponent: isLikelyComponent(name, body.length ? body : [init.body as unknown as Node]),
+                startLine: vd.loc?.start.line ?? 0,
+                endLine: vd.loc?.end.line ?? 0,
+              };
+              functions.push(fn);
+              if (fn.isComponent) {
+                components.push({ name, kind: 'arrow', props: params, hooks, jsxTags, startLine: fn.startLine, endLine: fn.endLine });
+              }
+            }
+          }
+        }
       }
     }
 
