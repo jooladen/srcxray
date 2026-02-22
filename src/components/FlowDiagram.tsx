@@ -1,90 +1,117 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import type { AnalysisResult } from '@/lib/parser';
+import { buildFlowGraph, groupByKind, edgesFrom, edgesTo } from '@/lib/flow';
+import type { FlowNode, FlowGraph } from '@/lib/flow';
 
-interface FlowNode {
-  id: string;
-  kind: 'prop' | 'state' | 'effect' | 'jsx';
-  label: string;
-  line?: number;
-}
-
-const KIND_META = {
-  prop:   { label: 'Props (입력)',     color: 'bg-indigo-100 border-indigo-300 text-indigo-700', dot: '🔵' },
-  state:  { label: 'State (상태)',     color: 'bg-blue-100 border-blue-300 text-blue-700',       dot: '⚡' },
-  effect: { label: 'Effect (자동화)', color: 'bg-orange-100 border-orange-300 text-orange-700', dot: '🔄' },
-  jsx:    { label: 'JSX (화면 출력)', color: 'bg-green-100 border-green-300 text-green-700',    dot: '🖥️' },
+const KIND_META: Record<FlowNode['kind'], { label: string; color: string; dot: string; bg: string }> = {
+  prop:   { label: 'Props (입력)',   color: 'border-indigo-300 text-indigo-700', bg: 'bg-indigo-50',  dot: '🔵' },
+  state:  { label: 'State (상태)',   color: 'border-blue-300 text-blue-700',    bg: 'bg-blue-50',    dot: '⚡' },
+  effect: { label: 'Effect (자동화)', color: 'border-orange-300 text-orange-700', bg: 'bg-orange-50',dot: '🔄' },
+  jsx:    { label: 'JSX (화면)',     color: 'border-green-300 text-green-700',  bg: 'bg-green-50',   dot: '🖥️' },
 };
 
-function buildFlowNodes(result: AnalysisResult): FlowNode[][] {
-  const comp = result.components[0];
-  if (!comp) return [[], [], [], []];
+const EDGE_LABEL_COLORS: Record<string, string> = {
+  '초기값 전달': 'bg-indigo-100 text-indigo-600',
+  '변화 감지':   'bg-blue-100 text-blue-600',
+  '상태 업데이트': 'bg-orange-100 text-orange-600',
+  '화면 렌더링': 'bg-green-100 text-green-600',
+};
 
-  const props: FlowNode[] = comp.props.slice(0, 5).map((p, i) => ({
-    id: `prop-${i}`, kind: 'prop', label: p,
-  }));
+function NodeCard({
+  node,
+  graph,
+  highlighted,
+  onHover,
+}: {
+  node: FlowNode;
+  graph: FlowGraph;
+  highlighted: Set<string>;
+  onHover: (ids: Set<string> | null) => void;
+}) {
+  const meta      = KIND_META[node.kind];
+  const isHover   = highlighted.has(node.id);
+  const fromEdges = edgesFrom(graph, node.id);
+  const toEdges   = edgesTo(graph, node.id);
+  const connected = new Set([
+    ...fromEdges.map(e => e.to),
+    ...toEdges.map(e => e.from),
+    node.id,
+  ]);
 
-  const states: FlowNode[] = comp.hooks
-    .filter(h => h.name === 'useState')
-    .slice(0, 5)
-    .map((h, i) => ({
-      id: `state-${i}`, kind: 'state',
-      label: h.stateVar ? `${h.stateVar}` : 'state',
-      line: h.line,
-    }));
-
-  const effects: FlowNode[] = comp.hooks
-    .filter(h => h.name === 'useEffect')
-    .slice(0, 3)
-    .map((h, i) => ({
-      id: `effect-${i}`, kind: 'effect',
-      label: h.deps ? `deps: ${h.deps}` : 'useEffect',
-      line: h.line,
-    }));
-
-  const customHooks = comp.hooks
-    .filter(h => !['useState', 'useEffect'].includes(h.name))
-    .slice(0, 2)
-    .map((h, i) => ({
-      id: `custom-${i}`, kind: 'effect' as const,
-      label: h.name, line: h.line,
-    }));
-
-  const jsxNodes: FlowNode[] = [
-    ...comp.jsxTags
-      .filter(t => t[0] === t[0].toUpperCase()) // custom components first
-      .slice(0, 2)
-      .map((t, i) => ({ id: `jsx-c${i}`, kind: 'jsx' as const, label: `<${t}>` })),
-    ...comp.jsxTags
-      .filter(t => t[0] !== t[0].toUpperCase())
-      .slice(0, 3)
-      .map((t, i) => ({ id: `jsx-h${i}`, kind: 'jsx' as const, label: `<${t}>` })),
-  ].slice(0, 5);
-
-  return [props, states, [...effects, ...customHooks], jsxNodes];
-}
-
-function NodeCard({ node }: { node: FlowNode }) {
-  const meta = KIND_META[node.kind];
   return (
-    <div className={`border rounded-lg px-3 py-1.5 text-xs font-mono font-semibold ${meta.color} whitespace-nowrap`}>
-      {node.label}
-      {node.line && <span className="ml-1.5 opacity-50 font-normal">L{node.line}</span>}
+    <div
+      className={`border-2 rounded-xl px-3 py-2 text-xs font-mono font-semibold cursor-default transition-all select-none
+        ${meta.bg} ${meta.color}
+        ${isHover ? 'shadow-md scale-105 ring-2 ring-offset-1 ring-blue-400' : 'hover:shadow-sm hover:scale-102'}
+      `}
+      onMouseEnter={() => onHover(connected)}
+      onMouseLeave={() => onHover(null)}
+    >
+      <div className="flex items-center gap-1.5">
+        <span>{node.label}</span>
+        {node.line && <span className="opacity-40 font-normal">L{node.line}</span>}
+      </div>
+      {/* Outgoing edge labels */}
+      {fromEdges.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-1">
+          {fromEdges.map((e, i) => (
+            <span key={i} className={`text-[10px] px-1.5 py-0.5 rounded-full font-sans font-medium
+              ${EDGE_LABEL_COLORS[e.label] ?? 'bg-gray-100 text-gray-500'}`}>
+              → {e.label}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function Arrow() {
+function EdgeSummaryRow({ graph }: { graph: FlowGraph }) {
+  if (graph.edges.length === 0) return null;
+
+  const nodeMap = new Map(graph.nodes.map(n => [n.id, n]));
+
   return (
-    <div className="flex items-center px-1 text-gray-400 text-lg select-none">
-      →
+    <div className="border rounded-xl overflow-hidden">
+      <div className="bg-gray-50 border-b px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wide">
+        🔗 연결 관계 ({graph.edges.length}개)
+      </div>
+      <div className="divide-y">
+        {graph.edges.map((edge, i) => {
+          const from = nodeMap.get(edge.from);
+          const to   = nodeMap.get(edge.to);
+          if (!from || !to) return null;
+          const fromMeta = KIND_META[from.kind];
+          const toMeta   = KIND_META[to.kind];
+          return (
+            <div key={i} className="flex items-center gap-2 px-4 py-2 text-xs hover:bg-gray-50 transition-colors">
+              <span className={`px-2 py-0.5 rounded border font-mono font-semibold ${fromMeta.bg} ${fromMeta.color}`}>
+                {fromMeta.dot} {from.label}
+              </span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium
+                ${EDGE_LABEL_COLORS[edge.label] ?? 'bg-gray-100 text-gray-500'}`}>
+                ──{edge.label}──▶
+              </span>
+              <span className={`px-2 py-0.5 rounded border font-mono font-semibold ${toMeta.bg} ${toMeta.color}`}>
+                {toMeta.dot} {to.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
 export default function FlowDiagram({ result }: { result: AnalysisResult }) {
-  const comp = result.components[0];
+  const [highlighted, setHighlighted] = useState<Set<string>>(new Set());
 
+  const graph   = useMemo(() => buildFlowGraph(result), [result]);
+  const grouped = useMemo(() => groupByKind(graph), [graph]);
+
+  const comp = result.components[0];
   if (!comp) {
     return (
       <div className="text-center py-8 text-gray-400">
@@ -93,60 +120,64 @@ export default function FlowDiagram({ result }: { result: AnalysisResult }) {
     );
   }
 
-  const [props, states, effects, jsxNodes] = buildFlowNodes(result);
-
-  const columns = [
-    { nodes: props,    key: 'prop'   as const },
-    { nodes: states,   key: 'state'  as const },
-    { nodes: effects,  key: 'effect' as const },
-    { nodes: jsxNodes, key: 'jsx'    as const },
-  ];
-
-  const hasContent = columns.some(c => c.nodes.length > 0);
+  const COLUMNS: FlowNode['kind'][] = ['prop', 'state', 'effect', 'jsx'];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Legend */}
-      <div className="flex flex-wrap gap-3 text-xs">
-        {(Object.entries(KIND_META) as [FlowNode['kind'], typeof KIND_META.prop][]).map(([k, m]) => (
-          <span key={k} className={`flex items-center gap-1.5 border rounded-full px-3 py-1 ${m.color}`}>
-            {m.dot} {m.label}
+      <div className="flex flex-wrap gap-2 text-xs">
+        {COLUMNS.map(k => (
+          <span key={k} className={`flex items-center gap-1.5 border-2 rounded-full px-3 py-1 ${KIND_META[k].bg} ${KIND_META[k].color}`}>
+            {KIND_META[k].dot} {KIND_META[k].label}
           </span>
+        ))}
+        <span className="text-gray-400 text-xs ml-2 self-center">
+          · 노드에 hover하면 연결 관계가 강조됩니다
+        </span>
+      </div>
+
+      {/* Node columns — responsive: column on mobile, row on md+ */}
+      <div className="flex flex-col sm:flex-row items-start gap-2 overflow-x-auto">
+        {COLUMNS.map((kind, ci) => (
+          <div key={kind} className="flex sm:flex-col items-center sm:items-start gap-2 flex-1 min-w-0">
+            {/* Column header */}
+            <div className={`text-xs font-bold uppercase tracking-wide shrink-0 px-2 py-1 rounded-lg ${KIND_META[kind].bg} ${KIND_META[kind].color}`}>
+              {KIND_META[kind].dot} {kind === 'prop' ? 'Props' : kind === 'state' ? 'State' : kind === 'effect' ? 'Effect' : 'JSX'}
+            </div>
+
+            {/* Nodes */}
+            <div className="flex sm:flex-col gap-1.5 flex-wrap sm:flex-nowrap w-full">
+              {grouped[kind].length > 0
+                ? grouped[kind].map(node => (
+                    <NodeCard
+                      key={node.id}
+                      node={node}
+                      graph={graph}
+                      highlighted={highlighted}
+                      onHover={ids => setHighlighted(ids ?? new Set())}
+                    />
+                  ))
+                : <span className="text-xs text-gray-300 italic px-2">없음</span>
+              }
+            </div>
+
+            {/* Column arrow (desktop only, between columns) */}
+            {ci < COLUMNS.length - 1 && (
+              <div className="hidden sm:flex items-center self-start mt-7 text-gray-300 text-xl px-1 shrink-0">
+                →
+              </div>
+            )}
+          </div>
         ))}
       </div>
 
-      {/* Flow */}
-      {hasContent ? (
-        <div className="overflow-x-auto">
-          <div className="flex items-start gap-0 min-w-max">
-            {columns.map((col, ci) => (
-              <div key={ci} className="flex items-start">
-                {/* Column */}
-                <div className="flex flex-col gap-2 min-w-28">
-                  <div className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1 text-center">
-                    {KIND_META[col.key].dot} {col.key === 'prop' ? 'Props' : col.key === 'state' ? 'State' : col.key === 'effect' ? 'Effect' : 'JSX'}
-                  </div>
-                  {col.nodes.length > 0
-                    ? col.nodes.map((node, ni) => <NodeCard key={ni} node={node} />)
-                    : <div className="text-xs text-gray-300 italic text-center pt-2">없음</div>
-                  }
-                </div>
-                {/* Arrow between columns */}
-                {ci < columns.length - 1 && (
-                  <div className="pt-7">
-                    <Arrow />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <p className="text-gray-400 text-sm">흐름 데이터가 부족합니다.</p>
-      )}
+      {/* Edge Summary Table */}
+      <EdgeSummaryRow graph={graph} />
 
       <div className="text-xs text-gray-400 border-t pt-3">
-        💡 <strong>읽는 법:</strong> 왼쪽(Props)에서 오른쪽(JSX)으로 데이터가 흘러갑니다. State가 바뀌면 JSX가 다시 그려집니다.
+        💡 <strong>읽는 법:</strong>&nbsp;
+        🔵 Props → ⚡ State → 🔄 Effect → 🖥️ JSX 순으로 데이터가 흘러갑니다.
+        State가 바뀌면 Effect가 반응하고, JSX가 다시 그려집니다.
       </div>
     </div>
   );

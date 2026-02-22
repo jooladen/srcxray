@@ -30,7 +30,7 @@ export default function TldrCard({ tldr, result, fileName }: Props) {
   };
 
   return (
-    <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-5 text-white shadow-lg">
+    <div className="animate-fadeIn bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-5 text-white shadow-lg">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           {/* Label */}
