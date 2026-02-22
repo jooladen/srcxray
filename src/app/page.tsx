@@ -230,6 +230,12 @@ export default function Home() {
 
         {result && (
           <>
+            {isLoading && (
+              <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-blue-600 text-sm font-medium animate-pulse">
+                <span className="text-lg">🔍</span> AST 파싱 중...
+              </div>
+            )}
+
             {/* TL;DR Card (F-01 + F-05 + F-11) */}
             {tldr && (
               <TldrCard tldr={tldr} result={result} fileName={fileName} />
