@@ -1,22 +1,50 @@
 'use client';
 
+import { useState } from 'react';
 import type { ComponentInfo, HookCall } from '@/lib/parser';
+import { getHookExplanation } from '@/lib/hook-explainer';
 
 function HookBadge({ hook }: { hook: HookCall }) {
+  const [open, setOpen] = useState(false);
+  const exp = getHookExplanation(hook);
+
   const colors: Record<string, string> = {
-    useState:    'bg-blue-100 text-blue-700',
-    useEffect:   'bg-orange-100 text-orange-700',
-    useCallback: 'bg-purple-100 text-purple-700',
-    useMemo:     'bg-green-100 text-green-700',
-    useRef:      'bg-gray-100 text-gray-700',
-    useContext:  'bg-yellow-100 text-yellow-700',
+    useState:    'bg-blue-100 text-blue-700 border-blue-200',
+    useEffect:   'bg-orange-100 text-orange-700 border-orange-200',
+    useCallback: 'bg-purple-100 text-purple-700 border-purple-200',
+    useMemo:     'bg-green-100 text-green-700 border-green-200',
+    useRef:      'bg-gray-100 text-gray-700 border-gray-200',
+    useContext:  'bg-yellow-100 text-yellow-700 border-yellow-200',
   };
-  const cls = colors[hook.name] ?? 'bg-pink-100 text-pink-700';
+  const cls = colors[hook.name] ?? 'bg-pink-100 text-pink-700 border-pink-200';
+
   return (
-    <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-mono ${cls}`}>
-      {hook.name}
-      {hook.stateVar && <span className="opacity-70">→ {hook.stateVar}</span>}
-    </span>
+    <div className="inline-block">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-mono border cursor-pointer hover:opacity-80 transition-opacity ${cls}`}
+        title="클릭해서 설명 보기"
+      >
+        {exp.emoji} {hook.name}
+        {hook.stateVar && <span className="opacity-60">→ {hook.stateVar}</span>}
+        <span className="ml-1 opacity-40 text-xs">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="mt-1 mb-1 ml-1 text-xs bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm max-w-xs">
+          <div className="flex items-start gap-2">
+            <span className="text-lg shrink-0">{exp.emoji}</span>
+            <div>
+              <div className="font-semibold text-gray-700">{exp.pattern}</div>
+              <div className="text-gray-600 mt-0.5">{exp.plain}</div>
+              {hook.line > 0 && (
+                <div className="text-gray-400 mt-1">📍 {hook.line}줄</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -48,10 +76,10 @@ function ComponentCard({ component }: { component: ComponentInfo }) {
         }
       </div>
 
-      {/* Hooks */}
+      {/* Hooks — clickable */}
       {component.hooks.length > 0 && (
         <div className="mb-2">
-          <span className="text-xs font-semibold text-gray-500 mr-2">훅 (상태/효과):</span>
+          <span className="text-xs font-semibold text-gray-500 mr-2">훅 (클릭하면 설명 ↓):</span>
           <div className="flex flex-wrap gap-1 mt-1">
             {component.hooks.map((h, i) => <HookBadge key={i} hook={h} />)}
           </div>
@@ -69,7 +97,7 @@ function ComponentCard({ component }: { component: ComponentInfo }) {
                 <span key={i} className={`text-xs px-2 py-0.5 rounded font-mono ${
                   isCustom ? 'bg-purple-50 text-purple-600 border border-purple-200' : 'bg-gray-100 text-gray-600'
                 }`}>
-                  {isCustom ? `<${tag}>` : `<${tag}>`}
+                  {`<${tag}>`}
                 </span>
               );
             })}
@@ -99,6 +127,7 @@ export default function ComponentTree({ components }: { components: ComponentInf
       {components.map((c, i) => <ComponentCard key={i} component={c} />)}
       <div className="text-xs text-gray-400 border-t pt-3 mt-2">
         💡 <strong>보라색 태그</strong>는 직접 만든 컴포넌트, <strong>회색 태그</strong>는 HTML 기본 요소입니다.
+        훅 배지를 클릭하면 초보자 설명이 펼쳐집니다.
       </div>
     </div>
   );
