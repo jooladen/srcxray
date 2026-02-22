@@ -23,7 +23,8 @@ export function generateTldr(result: Pick<AnalysisResult, 'imports' | 'component
   const hasList    = allJsxTags.some(t => ['ul', 'li', 'table', 'tr', 'tbody'].includes(t));
   const hasFetch   = imports.some(i => i.specifiers.some(s => ['fetch', 'axios', 'api'].some(k => s.toLowerCase().includes(k))))
                   || hooks.some(h => h.name === 'useEffect' && h.deps === '[]');
-  const hasAuth    = imports.some(i => ['auth', 'session', 'user', 'login', 'jwt'].some(k => i.source.toLowerCase().includes(k)));
+  const hasAuth    = imports.some(i => ['auth', 'session', 'user', 'login', 'jwt'].some(k => i.source.toLowerCase().includes(k)))
+                  || hooks.some(h => h.stateVar?.match(/email|password|auth|token|session/i));
   const hasRouter  = imports.some(i => ['router', 'navigation', 'link', 'next/link'].some(k => i.source.toLowerCase().includes(k)));
   const hasModal   = allJsxTags.some(t => ['dialog', 'modal', 'drawer', 'overlay', 'popup'].includes(t));
   const hasSearch  = hooks.some(h => h.stateVar?.match(/search|filter|query|keyword/i));

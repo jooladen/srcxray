@@ -22,7 +22,7 @@ const NEXT_MAP: Record<string, NextTopic[]> = {
     { emoji: '🛡️', title: '에러 바운더리', reason: '비동기 에러를 우아하게 처리', url: 'https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary' },
     { emoji: '⚡', title: 'React Query', reason: '로딩·에러 상태 자동 관리', url: 'https://tanstack.com/query' },
   ],
-  'form': [
+  'form-handling': [
     { emoji: '📋', title: 'React Hook Form', reason: '폼 검증을 훨씬 쉽게', url: 'https://react-hook-form.com' },
     { emoji: '✅', title: 'Zod', reason: '타입 안전한 폼 검증', url: 'https://zod.dev' },
   ],

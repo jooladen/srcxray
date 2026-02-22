@@ -24,7 +24,10 @@ interface Props {
 
 export default function TldrCard({ tldr, result, fileName, concepts }: Props) {
   const [copied, setCopied] = useState(false);
-  const nextTopics = concepts ? getNextTopics(concepts.map(c => c.id)) : [];
+  const hookNames = result.hooks.map(h => h.name);
+  const hasProps = result.components.some(c => c.props.length > 0);
+  const extraIds = hasProps ? ['props'] : [];
+  const nextTopics = concepts ? getNextTopics([...concepts.map(c => c.id), ...extraIds, ...hookNames]) : [];
 
   const handleCopy = async () => {
     try {
