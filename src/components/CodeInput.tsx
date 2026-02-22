@@ -171,7 +171,7 @@ export default function CodeInput({ onAnalyze, isLoading, code, fileName, onCode
         <button
           onClick={() => code.trim() && onAnalyze(code, fileName || 'code.tsx')}
           disabled={!code.trim() || isLoading}
-          className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-bold rounded-xl transition-colors text-lg"
+          className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors text-lg"
         >
           {isLoading ? '분석 중...' : '🔍 분석 시작'}
         </button>

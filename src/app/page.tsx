@@ -285,7 +285,7 @@ export default function Home() {
                 {SAMPLES.map(s => (
                   <button
                     key={s.id}
-                    onClick={() => handleAnalyze(s.code, s.title + '.tsx')}
+                    onClick={() => { setCode(s.code); setFileName(s.title + '.tsx'); }}
                     className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-blue-400 hover:shadow-md hover:scale-105 transition-all text-left"
                   >
                     <span className="text-2xl">{s.emoji}</span>
