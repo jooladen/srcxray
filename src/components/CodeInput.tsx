@@ -1,6 +1,10 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+
+export interface CodeInputHandle {
+  scrollToLine: (line: number) => void;
+}
 
 interface Props {
   onAnalyze: (code: string, fileName: string) => void;
@@ -70,11 +74,26 @@ export default function UserList({ title = '사용자 목록', maxItems = 10 }: 
   );
 }`;
 
-export default function CodeInput({ onAnalyze, isLoading, code, fileName, onCodeChange, onFileNameChange, onReset }: Props) {
+const CodeInput = forwardRef<CodeInputHandle, Props>(function CodeInput(
+  { onAnalyze, isLoading, code, fileName, onCodeChange, onFileNameChange, onReset }: Props,
+  ref
+) {
   const [dragOver, setDragOver] = useState(false);
+  const [highlightedLine, setHighlightedLine] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumRef = useRef<HTMLDivElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    scrollToLine: (line: number) => {
+      const lineHeight = 20; // leading-5
+      const scrollTop = (line - 1) * lineHeight;
+      if (textareaRef.current) textareaRef.current.scrollTop = scrollTop;
+      if (lineNumRef.current)  lineNumRef.current.scrollTop  = scrollTop;
+      setHighlightedLine(line);
+      setTimeout(() => setHighlightedLine(null), 1500);
+    },
+  }));
 
   const syncScroll = () => {
     if (lineNumRef.current && textareaRef.current) {
@@ -148,7 +167,13 @@ export default function CodeInput({ onAnalyze, isLoading, code, fileName, onCode
             style={{ minWidth: '3rem' }}
           >
             {(code || ' ').split('\n').map((_, i) => (
-              <div key={i} className="leading-5">{i + 1}</div>
+              <div
+                key={i}
+                className={`leading-5 transition-colors duration-300 rounded
+                  ${highlightedLine === i + 1 ? 'bg-yellow-400 text-gray-900' : ''}`}
+              >
+                {i + 1}
+              </div>
             ))}
           </div>
           {/* Textarea */}
@@ -195,4 +220,6 @@ export default function CodeInput({ onAnalyze, isLoading, code, fileName, onCode
       </div>
     </div>
   );
-}
+});
+
+export default CodeInput;

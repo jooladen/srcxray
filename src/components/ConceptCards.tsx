@@ -110,9 +110,11 @@ function MasterChecklist({ concepts, checkedIds, onToggle }: {
 export default function ConceptCards({
   concepts,
   hooks,
+  onScrollToLine,
 }: {
   concepts: ConceptItem[];
   hooks: HookCall[];
+  onScrollToLine?: (line: number) => void;
 }) {
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -170,9 +172,18 @@ export default function ConceptCards({
                 <div className="bg-yellow-50 rounded-lg px-3 py-2 text-sm">
                   🎯 <strong>비유:</strong> {concept.analogy}
                 </div>
-                <div className="text-xs text-gray-500">
-                  <span className="font-semibold">이 파일에서:</span>{' '}
-                  {concept.patternDesc} — {concept.lines.slice(0, 5).map(l => `${l}줄`).join(', ')}
+                <div className="text-xs text-gray-500 flex items-center flex-wrap gap-1">
+                  <span className="font-semibold">이 파일에서:</span>
+                  {concept.patternDesc} —
+                  {concept.lines.slice(0, 5).map(l => (
+                    <button
+                      key={l}
+                      onClick={e => { e.stopPropagation(); onScrollToLine?.(l); }}
+                      className="text-blue-600 hover:underline hover:text-blue-800 transition-colors"
+                    >
+                      {l}줄
+                    </button>
+                  ))}
                   {concept.lines.length > 5 && ` 외 ${concept.lines.length - 5}개`}
                 </div>
                 <button

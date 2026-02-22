@@ -6,9 +6,12 @@ import type { AnalysisResult } from '@/lib/parser';
 import type { FileTldr } from '@/lib/tldr';
 import type { DangerItem } from '@/lib/danger-detector';
 import type { ConceptItem } from '@/lib/concept-finder';
+import type { CodeInputHandle } from '@/components/CodeInput';
 import { SAMPLES } from '@/lib/samples';
+import { saveHistory, loadHistory, deleteHistory } from '@/lib/history';
+import type { HistoryItem } from '@/lib/history';
 
-const CodeInput     = dynamic(() => import('@/components/CodeInput'),     { ssr: false });
+import CodeInput from '@/components/CodeInput';
 const TldrCard      = dynamic(() => import('@/components/TldrCard'),      { ssr: false });
 const ImportMap     = dynamic(() => import('@/components/ImportMap'),     { ssr: false });
 const ComponentTree = dynamic(() => import('@/components/ComponentTree'), { ssr: false });
@@ -19,6 +22,7 @@ const CodeHeatmap   = dynamic(() => import('@/components/CodeHeatmap'),   { ssr:
 const HookCards     = dynamic(() => import('@/components/HookCards'),     { ssr: false });
 const DangerCard    = dynamic(() => import('@/components/DangerCard'),    { ssr: false });
 const ConceptCards  = dynamic(() => import('@/components/ConceptCards'),  { ssr: false });
+const HistoryPanel  = dynamic(() => import('@/components/HistoryPanel'),  { ssr: false });
 
 const COMPLEXITY_META = {
   simple:   { label: '단순',  color: 'bg-green-100 text-green-700',  desc: '금방 파악 가능' },
@@ -101,6 +105,16 @@ export default function Home() {
   const [achievement,  setAchievement] = useState('');
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // F-17: 코드 줄 하이라이트
+  const codeInputRef = useRef<CodeInputHandle>(null);
+  const handleScrollToLine = useCallback((line: number) => {
+    codeInputRef.current?.scrollToLine(line);
+  }, []);
+
+  // F-19: 히스토리
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  useEffect(() => { setHistory(loadHistory()); }, []);
+
   useEffect(() => {
     if (timerRunning) {
       timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
@@ -134,6 +148,8 @@ export default function Home() {
     setTldr({ ...fileTldr, dangerCount: dangerItems.length });
     setDangers(dangerItems);
     setConcepts(conceptItems);
+    const saved = saveHistory(name, inputCode);
+    setHistory(saved);
     setActiveTab('guide');
     setTimerRunning(true);
     setIsLoading(false);
@@ -204,6 +220,7 @@ export default function Home() {
             <span className="text-xl">📋</span> 코드 입력
           </h2>
           <CodeInput
+            ref={codeInputRef}
             onAnalyze={handleAnalyze}
             isLoading={isLoading}
             code={code}
@@ -238,11 +255,11 @@ export default function Home() {
 
             {/* TL;DR Card (F-01 + F-05 + F-11) */}
             {tldr && (
-              <TldrCard tldr={tldr} result={result} fileName={fileName} />
+              <TldrCard tldr={tldr} result={result} fileName={fileName} concepts={concepts} />
             )}
 
             {/* Stats (F-09: CountUp animation) */}
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 gap-3 animate-fadeInUp animation-delay-100">
               <AnimatedStat value={result.totalLines}        label="전체 줄"  emoji="📏" color="bg-blue-50 border-blue-200 text-blue-700" />
               <AnimatedStat value={result.components.length} label="컴포넌트" emoji="🧩" color="bg-purple-50 border-purple-200 text-purple-700" />
               <AnimatedStat value={result.hooks.length}      label="훅"       emoji="⚡" color="bg-orange-50 border-orange-200 text-orange-700" />
@@ -250,7 +267,7 @@ export default function Home() {
             </div>
 
             {/* Tabs */}
-            <section className="bg-white rounded-2xl shadow-sm border overflow-hidden">
+            <section className="bg-white rounded-2xl shadow-sm border overflow-hidden animate-fadeInUp animation-delay-200">
               <div className="flex border-b overflow-x-auto">
                 {TABS.map(tab => (
                   <button
@@ -277,8 +294,8 @@ export default function Home() {
 
               <div className="p-6">
                 {activeTab === 'guide'      && <LearningGuide sections={result.learningGuide} />}
-                {activeTab === 'danger'     && <DangerCard dangers={dangers} />}
-                {activeTab === 'concepts'   && <ConceptCards concepts={concepts} hooks={result.hooks} />}
+                {activeTab === 'danger'     && <DangerCard dangers={dangers} onScrollToLine={handleScrollToLine} />}
+                {activeTab === 'concepts'   && <ConceptCards concepts={concepts} hooks={result.hooks} onScrollToLine={handleScrollToLine} />}
                 {activeTab === 'components' && <ComponentTree components={result.components} />}
                 {activeTab === 'flow'       && <FlowDiagram result={result} />}
                 {activeTab === 'heatmap'    && <CodeHeatmap code={code} />}
@@ -314,6 +331,13 @@ export default function Home() {
                 ))}
               </div>
             </div>
+
+            {/* F-19: 히스토리 */}
+            <HistoryPanel
+              history={history}
+              onSelect={item => { handleReset(); setCode(item.code); setFileName(item.fileName); }}
+              onDelete={id => setHistory(deleteHistory(id))}
+            />
           </div>
         )}
       </main>

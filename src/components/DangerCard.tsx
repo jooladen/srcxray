@@ -8,7 +8,7 @@ const LEVEL_STYLE = {
   low:    { bg: 'bg-blue-50 border-blue-300',  badge: 'bg-blue-100 text-blue-700',  label: '🔵 낮음' },
 };
 
-export default function DangerCard({ dangers }: { dangers: DangerItem[] }) {
+export default function DangerCard({ dangers, onScrollToLine }: { dangers: DangerItem[]; onScrollToLine?: (line: number) => void }) {
   if (dangers.length === 0) {
     return (
       <div className="text-center py-12">
@@ -42,8 +42,16 @@ export default function DangerCard({ dangers }: { dangers: DangerItem[] }) {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {d.lines.length > 0 && (
-                    <span className="text-xs text-gray-500">
-                      📍 {d.lines.slice(0, 3).map(l => `${l}줄`).join(', ')}
+                    <span className="text-xs text-gray-500 flex items-center gap-1 flex-wrap">
+                      📍 {d.lines.slice(0, 3).map(l => (
+                        <button
+                          key={l}
+                          onClick={e => { e.stopPropagation(); onScrollToLine?.(l); }}
+                          className="text-blue-600 hover:underline hover:text-blue-800 transition-colors"
+                        >
+                          {l}줄
+                        </button>
+                      ))}
                       {d.lines.length > 3 && ` 외 ${d.lines.length - 3}개`}
                     </span>
                   )}

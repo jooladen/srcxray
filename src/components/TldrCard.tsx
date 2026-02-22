@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import type { FileTldr } from '@/lib/tldr';
 import type { AnalysisResult } from '@/lib/parser';
+import type { ConceptItem } from '@/lib/concept-finder';
 import { generateMarkdownReport } from '@/lib/report-text';
+import { getNextTopics } from '@/lib/next-learning';
 
 const BADGE_COLORS: Record<string, string> = {
   blue:   'bg-blue-100/30 text-white border border-blue-300/30',
@@ -17,10 +19,12 @@ interface Props {
   tldr: FileTldr;
   result: AnalysisResult;
   fileName: string;
+  concepts?: ConceptItem[];
 }
 
-export default function TldrCard({ tldr, result, fileName }: Props) {
+export default function TldrCard({ tldr, result, fileName, concepts }: Props) {
   const [copied, setCopied] = useState(false);
+  const nextTopics = concepts ? getNextTopics(concepts.map(c => c.id)) : [];
 
   const handleCopy = async () => {
     try {
@@ -29,25 +33,24 @@ export default function TldrCard({ tldr, result, fileName }: Props) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // clipboard unavailable (e.g. plain HTTP context) — silently ignore
+      // clipboard unavailable — silently ignore
     }
   };
 
   return (
     <div className="animate-fadeIn bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-5 text-white shadow-lg">
       <div className="flex items-start justify-between gap-4">
+
+        {/* Left: content */}
         <div className="flex-1 min-w-0">
-          {/* Label */}
           <div className="text-blue-200 text-xs font-semibold uppercase tracking-widest mb-1">
             📋 이 파일이 하는 일
           </div>
 
-          {/* Summary */}
           <p className="text-lg font-bold leading-snug mb-3">
             &ldquo;{tldr.summary}&rdquo;
           </p>
 
-          {/* Role chips */}
           {tldr.role.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-3">
               {tldr.role.map((r, i) => (
@@ -58,7 +61,6 @@ export default function TldrCard({ tldr, result, fileName }: Props) {
             </div>
           )}
 
-          {/* Stat badges */}
           <div className="flex flex-wrap gap-2">
             {tldr.badges.map((b, i) => (
               <span key={i} className={`text-xs px-2.5 py-1 rounded-full font-semibold ${BADGE_COLORS[b.color]}`}>
@@ -67,7 +69,6 @@ export default function TldrCard({ tldr, result, fileName }: Props) {
             ))}
           </div>
 
-          {/* 위험 신호 뱃지 */}
           <div className="mt-2">
             {tldr.dangerCount === 0 ? (
               <span className="text-xs bg-green-500/30 border border-green-400/40 text-white px-2.5 py-1 rounded-full font-semibold">
@@ -80,7 +81,6 @@ export default function TldrCard({ tldr, result, fileName }: Props) {
             )}
           </div>
 
-          {/* Motivations */}
           {tldr.motivations.length > 0 && (
             <div className="mt-3 pt-3 border-t border-white/20">
               <div className="text-blue-200 text-xs font-semibold mb-1.5">
@@ -88,17 +88,39 @@ export default function TldrCard({ tldr, result, fileName }: Props) {
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {tldr.motivations.map((m, i) => (
-                  <span key={i}
-                    className="text-xs bg-white/20 hover:bg-white/30 transition-colors px-2.5 py-1 rounded-full font-medium cursor-default">
+                  <span key={i} className="text-xs bg-white/20 hover:bg-white/30 transition-colors px-2.5 py-1 rounded-full font-medium cursor-default">
                     {m}
                   </span>
                 ))}
               </div>
             </div>
           )}
+
+          {/* F-20: 다음 학습 추천 */}
+          {nextTopics.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-white/20">
+              <div className="text-blue-200 text-xs font-semibold mb-1.5">
+                🎓 다음에 이걸 배워보세요 →
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {nextTopics.map((t, i) => (
+                  <a
+                    key={i}
+                    href={t.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={t.reason}
+                    className="text-xs bg-white/20 hover:bg-white/30 transition-colors px-2.5 py-1 rounded-full font-medium"
+                  >
+                    {t.emoji} {t.title}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Copy button (F-05) */}
+        {/* Right: copy button */}
         <button
           onClick={handleCopy}
           className="shrink-0 flex flex-col items-center gap-1 bg-white/15 hover:bg-white/25 transition-colors rounded-xl px-3 py-2 text-white"
@@ -107,6 +129,7 @@ export default function TldrCard({ tldr, result, fileName }: Props) {
           <span className="text-xl">{copied ? '✅' : '📋'}</span>
           <span className="text-xs font-medium">{copied ? '복사됨!' : '복사'}</span>
         </button>
+
       </div>
     </div>
   );
