@@ -139,6 +139,16 @@ export default function Home() {
     setIsLoading(false);
   }, []);
 
+  const handleReset = useCallback(() => {
+    setResult(null);
+    setTldr(null);
+    setDangers([]);
+    setConcepts([]);
+    setTimerRunning(false);
+    setAchievement('');
+    setElapsed(0);
+  }, []);
+
   const handleDone = () => {
     setTimerRunning(false);
     if (result) setAchievement(getAchievement(elapsed, result.totalLines));
@@ -200,6 +210,7 @@ export default function Home() {
             fileName={fileName}
             onCodeChange={setCode}
             onFileNameChange={setFileName}
+            onReset={handleReset}
           />
         </section>
 
@@ -285,7 +296,7 @@ export default function Home() {
                 {SAMPLES.map(s => (
                   <button
                     key={s.id}
-                    onClick={() => { setCode(s.code); setFileName(s.title + '.tsx'); }}
+                    onClick={() => { handleReset(); setCode(s.code); setFileName(s.title + '.tsx'); }}
                     className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-blue-400 hover:shadow-md hover:scale-105 transition-all text-left"
                   >
                     <span className="text-2xl">{s.emoji}</span>

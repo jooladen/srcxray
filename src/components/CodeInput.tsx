@@ -9,6 +9,7 @@ interface Props {
   fileName: string;
   onCodeChange: (code: string) => void;
   onFileNameChange: (name: string) => void;
+  onReset: () => void;
 }
 
 const SAMPLE_CODE = `import React, { useState, useEffect } from 'react';
@@ -69,7 +70,7 @@ export default function UserList({ title = '사용자 목록', maxItems = 10 }: 
   );
 }`;
 
-export default function CodeInput({ onAnalyze, isLoading, code, fileName, onCodeChange, onFileNameChange }: Props) {
+export default function CodeInput({ onAnalyze, isLoading, code, fileName, onCodeChange, onFileNameChange, onReset }: Props) {
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -86,6 +87,7 @@ export default function CodeInput({ onAnalyze, isLoading, code, fileName, onCode
       alert('TSX, TypeScript, JSX 파일만 지원합니다.');
       return;
     }
+    onReset();
     onFileNameChange(file.name);
     const reader = new FileReader();
     reader.onload = e => onCodeChange(e.target?.result as string ?? '');
@@ -100,6 +102,7 @@ export default function CodeInput({ onAnalyze, isLoading, code, fileName, onCode
   };
 
   const loadSample = () => {
+    onReset();
     onCodeChange(SAMPLE_CODE);
     onFileNameChange('UserList.tsx (샘플)');
   };
