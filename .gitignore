@@ -42,7 +42,5 @@ next-env.d.ts
 
 # bkit agent state (local only)
 .bkit/
-docs/.pdca-status.json
-docs/.bkit-memory.json
 
 .vercel
