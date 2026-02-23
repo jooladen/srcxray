@@ -19,8 +19,8 @@ const CONCEPT_DEFS = [
     level: 3 as const,
     description: '조건에 따라 다른 화면을 보여주는 핵심 패턴',
     analogy: '신호등 — 빨간불이면 멈추고, 초록불이면 가요',
-    regex: /[^<]\?[^?.]|\s&&\s|\|\|/,
-    patternDesc: '삼항연산자(? :) 또는 && 연산자로 발견',
+    regex: /[^<]\?[^?.:]|\s&&\s|\|\|/,
+    patternDesc: 'auto', // 실제 매칭 패턴에 따라 자동 결정
   },
   {
     id: 'list-rendering',
@@ -94,6 +94,25 @@ const CONCEPT_DEFS = [
   },
 ];
 
+function resolveConditionalPatternDesc(code: string, lines: number[]): string {
+  const codeLines = code.split('\n');
+  const ternaryRe = /[^<]\?[^?.:]/;
+  const andRe = /\s&&\s/;
+  const orRe = /\|\|/;
+  let hasTernary = false, hasAnd = false, hasOr = false;
+  for (const ln of lines) {
+    const line = codeLines[ln - 1] || '';
+    if (ternaryRe.test(line)) hasTernary = true;
+    if (andRe.test(line)) hasAnd = true;
+    if (orRe.test(line)) hasOr = true;
+  }
+  const parts: string[] = [];
+  if (hasTernary) parts.push('삼항연산자(? :)');
+  if (hasAnd) parts.push('&& 연산자');
+  if (hasOr) parts.push('|| 연산자');
+  return (parts.length > 0 ? parts.join(', ') : '조건부 패턴') + '으로 발견';
+}
+
 export function findConcepts(code: string, _result?: AnalysisResult): ConceptItem[] {
   const codeLines = code.split('\n');
   const found: ConceptItem[] = [];
@@ -104,6 +123,9 @@ export function findConcepts(code: string, _result?: AnalysisResult): ConceptIte
       if (def.regex.test(line)) matchedLines.push(i + 1);
     });
     if (matchedLines.length > 0) {
+      const patternDesc = def.patternDesc === 'auto'
+        ? resolveConditionalPatternDesc(code, matchedLines)
+        : def.patternDesc;
       found.push({
         id: def.id,
         name: def.name,
@@ -112,7 +134,7 @@ export function findConcepts(code: string, _result?: AnalysisResult): ConceptIte
         description: def.description,
         analogy: def.analogy,
         lines: matchedLines.slice(0, 5),
-        patternDesc: def.patternDesc,
+        patternDesc,
       });
     }
   }

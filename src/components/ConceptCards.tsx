@@ -5,7 +5,7 @@ import type { ConceptItem } from '@/lib/concept-finder';
 import type { HookCall } from '@/lib/parser';
 
 // ─── F-15: useEffect 타임라인 ─────────────────────────────────
-function EffectTimeline({ hooks }: { hooks: HookCall[] }) {
+function EffectTimeline({ hooks, onScrollToLine }: { hooks: HookCall[]; onScrollToLine?: (line: number) => void }) {
   const effects = hooks.filter(h => h.name === 'useEffect');
   if (effects.length === 0) return null;
 
@@ -31,7 +31,12 @@ function EffectTimeline({ hooks }: { hooks: HookCall[] }) {
               <span className={`text-xs px-2 py-1 rounded-full font-semibold ${color}`}>
                 {label}
               </span>
-              <span className="text-xs text-gray-400">📍 {e.line}줄</span>
+              <button
+                onClick={() => onScrollToLine?.(e.line)}
+                className="text-xs text-blue-600 hover:underline hover:text-blue-800 transition-colors"
+              >
+                📍 {e.line}줄
+              </button>
             </div>
           );
         })}
@@ -136,7 +141,7 @@ export default function ConceptCards({
       </p>
 
       {/* F-15: useEffect 타임라인 */}
-      <EffectTimeline hooks={hooks} />
+      <EffectTimeline hooks={hooks} onScrollToLine={onScrollToLine} />
 
       {/* F-14: 필수 개념 카드 */}
       {concepts.map(concept => {
