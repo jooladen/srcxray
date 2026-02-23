@@ -22,7 +22,8 @@ const CodeHeatmap   = dynamic(() => import('@/components/CodeHeatmap'),   { ssr:
 const HookCards     = dynamic(() => import('@/components/HookCards'),     { ssr: false });
 const DangerCard    = dynamic(() => import('@/components/DangerCard'),    { ssr: false });
 const ConceptCards  = dynamic(() => import('@/components/ConceptCards'),  { ssr: false });
-const HistoryPanel  = dynamic(() => import('@/components/HistoryPanel'),  { ssr: false });
+const HistoryPanel       = dynamic(() => import('@/components/HistoryPanel'),       { ssr: false });
+const DebugInjectorPanel = dynamic(() => import('@/components/DebugInjectorPanel'), { ssr: false });
 
 const COMPLEXITY_META = {
   simple:   { label: '단순',  color: 'bg-green-100 text-green-700',  desc: '금방 파악 가능' },
@@ -103,6 +104,7 @@ export default function Home() {
   const [elapsed,      setElapsed]    = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [achievement,  setAchievement] = useState('');
+  const [showReport,   setShowReport]  = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // F-17: 코드 줄 하이라이트
@@ -163,17 +165,85 @@ export default function Home() {
     setTimerRunning(false);
     setAchievement('');
     setElapsed(0);
+    setShowReport(false);
   }, []);
 
   const handleDone = () => {
     setTimerRunning(false);
-    if (result) setAchievement(getAchievement(elapsed, result.totalLines));
+    if (result) {
+      setAchievement(getAchievement(elapsed, result.totalLines));
+      setShowReport(true);
+    }
   };
 
   const complexity = result ? COMPLEXITY_META[result.fileComplexity] : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* 완주 보고서 모달 */}
+      {showReport && result && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4 animate-fadeInUp">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-black text-gray-900">🎉 완주 보고서</h2>
+              <button onClick={() => setShowReport(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+            </div>
+
+            <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-xl p-4 text-center font-bold text-sm">
+              {achievement}
+            </div>
+
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <span>📁</span>
+              <span className="truncate font-medium text-gray-700">{fileName}</span>
+              <span className="ml-auto text-blue-600 font-mono font-bold">⏱️ {formatTime(elapsed)}</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
+                <div className="text-xl font-black text-blue-700">{result.totalLines}</div>
+                <div className="text-xs text-blue-500">📏 전체 줄</div>
+              </div>
+              <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 text-center">
+                <div className="text-xl font-black text-purple-700">{result.components.length}</div>
+                <div className="text-xs text-purple-500">🧩 컴포넌트</div>
+              </div>
+              <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 text-center">
+                <div className="text-xl font-black text-orange-700">{result.hooks.length}</div>
+                <div className="text-xs text-orange-500">⚡ 훅</div>
+              </div>
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
+                <div className="text-xl font-black text-green-700">{result.imports.length}</div>
+                <div className="text-xs text-green-500">📦 Import</div>
+              </div>
+            </div>
+
+            {(dangers.length > 0 || concepts.length > 0) && (
+              <div className="flex gap-2">
+                {dangers.length > 0 && (
+                  <div className="flex-1 bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+                    <div className="text-xl font-black text-red-700">{dangers.length}</div>
+                    <div className="text-xs text-red-500">⚠️ 위험 신호</div>
+                  </div>
+                )}
+                {concepts.length > 0 && (
+                  <div className="flex-1 bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-center">
+                    <div className="text-xl font-black text-indigo-700">{concepts.length}</div>
+                    <div className="text-xs text-indigo-500">📖 필수 개념</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowReport(false)}
+              className="w-full bg-blue-600 text-white rounded-xl py-3 font-bold hover:bg-blue-700 transition-colors"
+            >
+              계속 학습하기 →
+            </button>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="bg-white border-b shadow-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3 flex-wrap">
@@ -205,11 +275,14 @@ export default function Home() {
           )}
         </div>
 
-        {/* Achievement banner */}
-        {achievement && (
-          <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-center py-2 text-sm font-bold animate-pulse">
-            {achievement}
-          </div>
+        {/* 완주 버튼 눌렀을 때 작은 확인 배너 */}
+        {achievement && !showReport && (
+          <button
+            onClick={() => setShowReport(true)}
+            className="w-full bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-center py-2 text-sm font-bold hover:opacity-90 transition-opacity"
+          >
+            {achievement} — 완주 보고서 보기 📊
+          </button>
         )}
       </header>
 
@@ -266,6 +339,16 @@ export default function Home() {
               <AnimatedStat value={result.imports.length}    label="Import"   emoji="📦" color="bg-green-50 border-green-200 text-green-700" />
             </div>
 
+            {/* Debug Injector Panel */}
+            {result && code && (
+              <DebugInjectorPanel
+                key={fileName + code.length}
+                code={code}
+                result={result}
+                fileName={fileName}
+              />
+            )}
+
             {/* Tabs */}
             <section className="bg-white rounded-2xl shadow-sm border overflow-hidden animate-fadeInUp animation-delay-200">
               <div className="flex border-b overflow-x-auto">
@@ -293,7 +376,7 @@ export default function Home() {
               </div>
 
               <div className="p-6">
-                {activeTab === 'guide'      && <LearningGuide sections={result.learningGuide} />}
+                {activeTab === 'guide'      && <LearningGuide sections={result.learningGuide} onComplete={handleDone} />}
                 {activeTab === 'danger'     && <DangerCard dangers={dangers} onScrollToLine={handleScrollToLine} />}
                 {activeTab === 'concepts'   && <ConceptCards concepts={concepts} hooks={result.hooks} onScrollToLine={handleScrollToLine} />}
                 {activeTab === 'components' && <ComponentTree components={result.components} />}

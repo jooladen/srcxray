@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { LearningSection } from '@/lib/parser';
 
 function TimeBar({ minutes, total }: { minutes: number; total: number }) {
@@ -15,7 +15,7 @@ function TimeBar({ minutes, total }: { minutes: number; total: number }) {
   );
 }
 
-export default function LearningGuide({ sections }: { sections: LearningSection[] }) {
+export default function LearningGuide({ sections, onComplete }: { sections: LearningSection[]; onComplete?: () => void }) {
   const totalMinutes = sections.reduce((s, sec) => s + sec.minutes, 0);
   const [checked, setChecked] = useState<Set<number>>(new Set());
 
@@ -26,6 +26,10 @@ export default function LearningGuide({ sections }: { sections: LearningSection[
   });
 
   const allDone = sections.length > 0 && checked.size === sections.length;
+
+  useEffect(() => {
+    if (allDone) onComplete?.();
+  }, [allDone]); // eslint-disable-line react-hooks/exhaustive-deps
   const progressPct = sections.length ? (checked.size / sections.length) * 100 : 0;
 
   if (sections.length === 0) {

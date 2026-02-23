@@ -4,6 +4,53 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2026-02-23] - debug-injector: Console.log 자동 주입기 완성 (95% Match)
+
+### Added
+- **F-01: 토글 버튼 UI** — 원본/주입/애니메이션 3단계 모드 전환
+- **F-02: Log 주입 엔진** — AST 기반 마커 블록 삽입 (props, state, effect, handler, render)
+- **F-03: 상태 관리** — Mode, injectedSource, breakdown 저장 (원본 절대 변경 안 함)
+- **F-04: 원클릭 원복** — [원본으로 복귀] 버튼으로 즉시 원복 (재계산 없음)
+- **F-05: 원본 백업 다운로드** — `.original.tsx` 파일 다운로드 기능
+- **WOW-01: 실행 순서 예측** — Mount/Update 단계 시각화 (1️⃣~🔟 이모지)
+- **WOW-02: 스마트 한국어 라벨** — 변수명 패턴 자동 분석 (10개 카테고리)
+- **WOW-03: 카운트업 애니메이션** — 주입 진행 상황 시각화 (requestAnimationFrame easing)
+- **WOW-04: 사용 가이드** — Step 1~5 단계별 안내
+- **신규 파일 2개**:
+  - `src/lib/debug-injector.ts` (230 LOC) — 주입 엔진, 스마트 라벨, 실행순서 예측
+  - `src/components/DebugInjectorPanel.tsx` (273 LOC) — UI 패널, 상태 관리, 애니메이션
+
+### Changed
+- `src/app/page.tsx`: DebugInjectorPanel dynamic import + Stats 아래 렌더링 (+3 LOC)
+
+### Quality Metrics
+- **Design Match Rate**: 95% (32/35 완전 일치, 3개 v2 보류)
+- **Architecture Compliance**: 100%
+- **Type Coverage**: 100% (3 interfaces + 1 type alias)
+- **New Lines of Code**: 503 LOC (신규 2파일)
+- **Iterations Required**: 0 (>=90% 기준 초과 충족)
+- **Browser Compatibility**: Modern browsers (Chrome, Firefox, Safari, Edge)
+
+### Implementation Details
+- **마커 블록**: `// @@SRCXRAY-START/END` 기반 안전한 원복
+- **역순 삽입**: 뒤에서부터 삽입으로 줄번호 밀림 방지 (O(n log n))
+- **스마트 라벨**: 10개 변수명 패턴 (켜짐/꺼짐, 카운터, 인증, 데이터, 에러 등)
+- **실행 순서**: Mount (props → state → render → effect) → Update (state change)
+- **Easing 애니메이션**: 3차 함수로 자연스러운 진행 상황 표시
+- **Lazy Loading**: Dynamic import로 번들 크기 영향 없음
+
+### Deferred to v2
+- WOW-05: 로그 결과 붙여넣기 → 타임라인 시각화 (Plan에서 v2 명시)
+- log-parser.ts (WOW-05 의존)
+
+### References
+- **Plan**: [docs/01-plan/features/debug-injector.plan.md](../01-plan/features/debug-injector.plan.md)
+- **Design**: [docs/02-design/features/debug-injector.design.md](../02-design/features/debug-injector.design.md)
+- **Analysis**: [docs/03-analysis/debug-injector.analysis.md](../03-analysis/debug-injector.analysis.md)
+- **Report**: [docs/04-report/features/debug-injector.report.md](./features/debug-injector.report.md)
+
+---
+
 ## [2026-02-23] - zero-script-qa: Parser QA & Bug Fixes Complete (100% Pass Rate)
 
 ### Added
