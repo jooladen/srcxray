@@ -212,7 +212,11 @@ function isLikelyComponent(name: string, body: Node[]): boolean {
   return tags.length > 0;
 }
 
-export function analyzeCode(code: string): AnalysisResult {
+export function analyzeCode(rawCode: string): AnalysisResult {
+  // Normalize line endings: \r\n → \n, standalone \r → \n
+  // Babel counts \r as a line terminator but split('\n') does not,
+  // causing line number mismatches (e.g. line 121 shown as 124)
+  const code = rawCode.replace(/\r\n?/g, '\n');
   const totalLines = code.split('\n').length;
 
   let ast: File;

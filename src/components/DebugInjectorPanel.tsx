@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { AnalysisResult } from '@/lib/parser';
 import type { InjectionBreakdown, ExecutionStep } from '@/lib/debug-injector';
-import type { UiElement } from '@/lib/ui-map-extractor';
+import type { UiElement, ChildComponentInfo } from '@/lib/ui-map-extractor';
 
 interface Props {
   code: string;
@@ -23,6 +23,7 @@ interface WizardState {
   totalCount: number;
   execSteps: ExecutionStep[];
   uiElements: UiElement[];
+  childComponents: ChildComponentInfo[];
   copied: boolean;
   csvDownloaded: boolean;
 }
@@ -37,6 +38,7 @@ const INITIAL: WizardState = {
   totalCount: 0,
   execSteps: [],
   uiElements: [],
+  childComponents: [],
   copied: false,
   csvDownloaded: false,
 };
@@ -128,13 +130,13 @@ export default function DebugInjectorPanel({ code, result, fileName }: Props) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [{ injectLogs, predictExecutionOrder }, { extractUiElements }] = await Promise.all([
+      const [{ injectLogs, predictExecutionOrder }, { extractUiMap }] = await Promise.all([
         import('@/lib/debug-injector'),
         import('@/lib/ui-map-extractor'),
       ]);
       const injResult = injectLogs(code, result);
       const execSteps = predictExecutionOrder(result);
-      const uiElements = extractUiElements(code, result);
+      const { elements: uiElements, childComponents } = extractUiMap(code, result);
       if (!cancelled) {
         setState((s) => ({
           ...s,
@@ -144,6 +146,7 @@ export default function DebugInjectorPanel({ code, result, fileName }: Props) {
           totalCount: injResult.totalCount,
           execSteps,
           uiElements,
+          childComponents,
         }));
       }
     })();
@@ -199,12 +202,12 @@ export default function DebugInjectorPanel({ code, result, fileName }: Props) {
   }, [code, fileName]);
 
   const handleDownloadCsv = useCallback(async () => {
-    const { generateCsv, downloadCsv } = await import('@/lib/ui-map-extractor');
-    const csv = generateCsv(state.uiElements);
+    const { generateFullMapCsv, downloadCsv } = await import('@/lib/ui-map-extractor');
+    const csv = generateFullMapCsv(state.uiElements, result, state.childComponents);
     const base = fileName.replace(/\.tsx?$/, '') || 'component';
-    downloadCsv(csv, `${base}.ui-map.csv`);
+    downloadCsv(csv, `${base}.interaction-map.csv`);
     setState((s) => ({ ...s, csvDownloaded: true }));
-  }, [state.uiElements, fileName]);
+  }, [state.uiElements, state.childComponents, result, fileName]);
 
   const handleReset = useCallback(() => {
     setState((s) => ({
@@ -430,37 +433,50 @@ export default function DebugInjectorPanel({ code, result, fileName }: Props) {
             )}
           </div>
 
-          {/* CSV 다운로드 (선택 사항) */}
+          {/* 전체 인터랙션 맵 CSV */}
           <div className="border border-gray-200 rounded-xl p-4 bg-gray-50 mb-4">
             <h4 className="font-bold text-gray-700 text-sm mb-1 flex items-center gap-2">
-              <span>📊</span> UI 요소 맵 (선택)
+              <span>📊</span> 화면 인터랙션 맵
             </h4>
             <p className="text-xs text-gray-500 mb-3">
-              버튼·입력·링크의 위치와 핸들러를 엑셀 CSV로 내보내기
+              상태 모델 + UI 인터랙션 + 자식 컴포넌트 데이터 흐름을 엑셀 CSV로 내보내기
             </p>
-            {uiElements.length > 0 ? (
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleDownloadCsv}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    state.csvDownloaded
-                      ? 'bg-green-100 text-green-700 border border-green-300'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
-                  }`}
-                >
-                  {state.csvDownloaded ? '✅ 완료' : `⬇ CSV (${uiElements.length}개 요소)`}
-                </button>
-                <button
-                  onClick={handleDownloadOriginal}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white text-gray-700
-                    border border-gray-300 hover:bg-gray-100 transition-colors"
-                >
-                  💾 원본 백업
-                </button>
-              </div>
-            ) : (
-              <p className="text-xs text-gray-400">이 파일에는 이벤트 요소가 없어요</p>
-            )}
+
+            {/* 맵 요약 뱃지 */}
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-purple-600">
+                📊 상태 {result.hooks.filter(h => h.name === 'useState').length}개
+              </span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-orange-50 border border-orange-200 text-orange-600">
+                🔁 이펙트 {result.hooks.filter(h => h.name === 'useEffect').length}개
+              </span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-600">
+                🎯 UI {uiElements.length}개
+              </span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-green-600">
+                🧩 컴포넌트 {state.childComponents.length}개
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleDownloadCsv}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  state.csvDownloaded
+                    ? 'bg-green-100 text-green-700 border border-green-300'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {state.csvDownloaded ? '✅ 다운로드 완료' : `⬇ 인터랙션 맵 CSV`}
+              </button>
+              <button
+                onClick={handleDownloadOriginal}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white text-gray-700
+                  border border-gray-300 hover:bg-gray-100 transition-colors"
+              >
+                💾 원본 백업
+              </button>
+            </div>
           </div>
 
           <div className="flex justify-between">

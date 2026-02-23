@@ -127,9 +127,11 @@ export default function Home() {
   }, [timerRunning]);
 
   const handleAnalyze = useCallback(async (inputCode: string, name: string) => {
+    // Normalize line endings so gutter line numbers match parser line numbers
+    const normalizedCode = inputCode.replace(/\r\n?/g, '\n');
     setIsLoading(true);
     setFileName(name);
-    setCode(inputCode);
+    setCode(normalizedCode);
     setAchievement('');
     setElapsed(0);
     await new Promise(r => setTimeout(r, 50));
@@ -141,16 +143,16 @@ export default function Home() {
       import('@/lib/concept-finder'),
     ]);
 
-    const analysis = analyzeCode(inputCode);
+    const analysis = analyzeCode(normalizedCode);
     const fileTldr = generateTldr(analysis);
-    const dangerItems  = detectDangers(inputCode, analysis);
-    const conceptItems = findConcepts(inputCode, analysis);
+    const dangerItems  = detectDangers(normalizedCode, analysis);
+    const conceptItems = findConcepts(normalizedCode, analysis);
 
     setResult(analysis);
     setTldr({ ...fileTldr, dangerCount: dangerItems.length });
     setDangers(dangerItems);
     setConcepts(conceptItems);
-    const saved = saveHistory(name, inputCode);
+    const saved = saveHistory(name, normalizedCode);
     setHistory(saved);
     setActiveTab('guide');
     setTimerRunning(true);

@@ -228,7 +228,11 @@ function findReturnSplice(lines: string[], startLine: number, endLine: number): 
   return null;
 }
 
-function buildInjectionPoints(source: string, result: AnalysisResult): InjectionPoint[] {
+function buildInjectionPoints(
+  source: string,
+  result: AnalysisResult,
+  labelResult: AnalysisResult,
+): InjectionPoint[] {
   const lines = source.split('\n');
   const points: InjectionPoint[] = [];
   const used = new Set<number>();
@@ -241,33 +245,39 @@ function buildInjectionPoints(source: string, result: AnalysisResult): Injection
     }
   };
 
-  for (const comp of result.components) {
+  for (let ci = 0; ci < result.components.length; ci++) {
+    const comp = result.components[ci];
+    const lComp = labelResult.components[ci]; // 원본 줄번호
+
     // ── Props: 함수 body { 다음 줄에 삽입 ──
     if (comp.props.length > 0) {
       const bodyStart = findBodyStartSplice(lines, comp.startLine);
       if (bodyStart !== null) {
         const propsStr = comp.props.slice(0, 5).join(', ');
-        const logArgs = `'[L:${bodyStart + 1}][${comp.name}][props]', { ${propsStr} }`;
-        addPoint(bodyStart, makeMarker(bodyStart + 1, logArgs, 'props'), 'props');
+        const logArgs = `'[L:${lComp.startLine}][${comp.name}][props]', { ${propsStr} }`;
+        addPoint(bodyStart, makeMarker(lComp.startLine, logArgs, 'props'), 'props');
       }
     }
 
     // ── Hooks ──
-    for (const h of comp.hooks) {
+    for (let hi = 0; hi < comp.hooks.length; hi++) {
+      const h = comp.hooks[hi];
+      const lH = lComp.hooks[hi]; // 원본 줄번호
+
       if (h.name === 'useState' && h.stateVar) {
         // 선언 끝(;) 다음 줄에 삽입
         const afterDecl = findStatementEndSplice(lines, h.line);
         const smartLabel = getSmartLabel(h.stateVar);
         const labelStr = smartLabel ? `${h.stateVar}(${smartLabel})` : h.stateVar;
-        const logArgs = `'[L:${afterDecl + 1}][state] ${labelStr} =', ${h.stateVar}`;
-        addPoint(afterDecl, makeMarker(afterDecl + 1, logArgs, 'state'), 'state');
+        const logArgs = `'[L:${lH.line}][state] ${labelStr} =', ${h.stateVar}`;
+        addPoint(afterDecl, makeMarker(lH.line, logArgs, 'state'), 'state');
       } else if (h.name === 'useEffect') {
         // 콜백 body { 다음 줄에 삽입
         const bodyStart = findBodyStartSplice(lines, h.line);
         if (bodyStart !== null) {
           const depsStr = h.deps ? ` deps:${h.deps}` : '';
-          const logArgs = `'[L:${bodyStart + 1}][useEffect]${depsStr} 시작'`;
-          addPoint(bodyStart, makeMarker(bodyStart + 1, logArgs, 'effect'), 'effect');
+          const logArgs = `'[L:${lH.line}][useEffect]${depsStr} 시작'`;
+          addPoint(bodyStart, makeMarker(lH.line, logArgs, 'effect'), 'effect');
         }
       }
     }
@@ -279,18 +289,18 @@ function buildInjectionPoints(source: string, result: AnalysisResult): Injection
         const renderArgs = `'[L:${returnSplice + 1}][${comp.name}] render'`;
         addPoint(returnSplice, makeMarker(returnSplice + 1, renderArgs, 'render'), 'render');
       }
-      // 표현식 body 컴포넌트는 injectLogs 전처리에서 블록 body로 변환됨
-      // → 변환 후 다시 buildInjectionPoints 가 호출되므로 여기선 폴백 불필요
     }
   }
 
   // ── 최상위 핸들러(non-component 함수): body { 다음 줄에 삽입 ──
-  for (const fn of result.functions) {
+  for (let fi = 0; fi < result.functions.length; fi++) {
+    const fn = result.functions[fi];
+    const lFn = labelResult.functions[fi]; // 원본 줄번호
     if (!fn.isComponent && fn.name && fn.startLine > 0) {
       const bodyStart = findBodyStartSplice(lines, fn.startLine);
       if (bodyStart !== null) {
-        const logArgs = `'[L:${bodyStart + 1}][${fn.name}] 진입'`;
-        addPoint(bodyStart, makeMarker(bodyStart + 1, logArgs, 'handler'), 'handler');
+        const logArgs = `'[L:${lFn.startLine}][${fn.name}] 진입'`;
+        addPoint(bodyStart, makeMarker(lFn.startLine, logArgs, 'handler'), 'handler');
       }
     }
   }
@@ -311,8 +321,8 @@ function buildInjectionPoints(source: string, result: AnalysisResult): Injection
       const fnBodyStart = findBodyStartSplice(lines, i + 1);
       if (fnBodyStart === null) continue;
 
-      const logArgs = `'[L:${fnBodyStart + 1}][${fnName}] 진입'`;
-      addPoint(fnBodyStart, makeMarker(fnBodyStart + 1, logArgs, 'handler'), 'handler');
+      const logArgs = `'[L:${i + 1}][${fnName}] 진입'`;
+      addPoint(fnBodyStart, makeMarker(i + 1, logArgs, 'handler'), 'handler');
     }
   }
 
@@ -367,7 +377,7 @@ export function injectLogs(source: string, result: AnalysisResult): InjectionRes
 
   // ── 2패스: 변환된 소스에 로그 포인트 삽입 ──
   const transformedSource = lines.join('\n');
-  const points = buildInjectionPoints(transformedSource, adjustedResult);
+  const points = buildInjectionPoints(transformedSource, adjustedResult, result);
 
   const sorted = [...points].sort((a, b) => b.line - a.line);
   const finalLines = transformedSource.split('\n');
