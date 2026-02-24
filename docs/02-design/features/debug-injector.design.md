@@ -92,6 +92,10 @@ export interface ExecutionStep {
 }
 ```
 
+> **참고**: `parser.ts`의 `HookCall` 인터페이스에 `memoVar?: string` 필드가 추가되어
+> `useMemo`/`useCallback` 선언 시 할당되는 변수명을 캡처합니다.
+> 이를 통해 주입 엔진이 메모이제이션된 값의 로깅과 실행 순서 예측을 지원합니다.
+
 ### 2.2 스마트 한국어 라벨 매핑
 
 ```typescript
@@ -148,11 +152,21 @@ AnalysisResult에서 추출:
 ComponentInfo마다:
   ├─ startLine+1  → props log (컴포넌트 진입부 첫 줄)
   ├─ hooks[].line → useState: stateVar + smartLabel
-  │                 useEffect: 내부 첫 줄 (line+1)
+  │                 useMemo: memoVar + smartLabel + deps 변수값 (state 카테고리)
+  │                 useEffect: 내부 첫 줄 (line+1) + deps 변수값
   └─ endLine-1    → render log (return 직전)
 
 FunctionItem마다 (isComponent=false):
   └─ startLine+1  → handler 진입 log
+```
+
+**deps 변수값 추출**: `parseDepsToVars(deps)` 헬퍼가 deps 문자열에서
+단순 식별자(`count`, `name`)만 추출하고 복합 표현식(`items.length`)은 안전하게 건너뜁니다.
+
+**주입 로그 형식 예시**:
+```
+useMemo:    console.log('[L:18][useMemo] filteredData =', filteredData, { items })
+useEffect:  console.log('[L:20][useEffect] deps:[count, name] 시작', { count, name })
 ```
 
 **핵심 규칙**: 동일 줄 중복 방지 (`Set<number>` dedup)
@@ -201,16 +215,18 @@ React 생명주기 순서에 따라 step 배열 생성:
 Mount 단계:
   1. 컴포넌트 진입 (props)
   2. useState 초기화 (선언 순서대로)
-  3. 첫 번째 render
-  4. useEffect 실행 (render 이후)
+  3. useMemo 계산 (선언 순서대로, render 전 동기 실행)
+     - memoVar + smartLabel + deps 표시
+  4. 첫 번째 render
+  5. useEffect 실행 (render 이후)
      - deps=[] → "(처음 한 번만 — mount)"
      - deps=[x] → "(x 바뀔 때마다)"
      - deps 없음 → "(매 render 후)"
 
 Update 단계 (점선 구분):
-  5. set상태() 호출 → 상태 변경
-  6. 재render
-  7. useEffect 재실행 (해당 deps 변경 시)
+  6. set상태() 호출 → 상태 변경
+  7. 재render
+  8. useEffect 재실행 (해당 deps 변경 시)
 ```
 
 ```typescript

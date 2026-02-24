@@ -55,6 +55,17 @@ function cap(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+/** deps 문자열("[count, name]")에서 단순 식별자만 추출 */
+function parseDepsToVars(deps?: string): string[] {
+  if (!deps) return [];
+  return deps
+    .replace(/^\[/, '')
+    .replace(/\]$/, '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(s => /^[a-zA-Z_$][\w$]*$/.test(s));
+}
+
 function makeMarker(line: number, logArgs: string, category: string): string {
   return [
     `  // @@SRCXRAY-START L:${line} category:${category}`,
@@ -118,6 +129,22 @@ function findStatementEndSplice(lines: string[], startLine: number): number {
     }
   }
   return startLine; // fallback: 단일 줄로 가정
+}
+
+/**
+ * useMemo/useEffect 콜백 body의 닫는 } 줄 index를 반환 (0-indexed).
+ * bodyStartSplice(= { 다음 줄)부터 brace depth를 추적한다.
+ */
+function findCallbackBodyEnd(lines: string[], bodyStartSplice: number): number {
+  let depth = 1;
+  for (let i = bodyStartSplice; i < Math.min(bodyStartSplice + 200, lines.length); i++) {
+    for (const ch of lines[i]) {
+      if (ch === '{') depth++;
+      if (ch === '}') depth--;
+    }
+    if (depth <= 0) return i;
+  }
+  return bodyStartSplice;
 }
 
 /**
@@ -271,13 +298,68 @@ function buildInjectionPoints(
         const labelStr = smartLabel ? `${h.stateVar}(${smartLabel})` : h.stateVar;
         const logArgs = `'[L:${lH.line}][state] ${labelStr} =', ${h.stateVar}`;
         addPoint(afterDecl, makeMarker(lH.line, logArgs, 'state'), 'state');
+      } else if (h.name === 'useMemo' && (h.memoVar || (h.memoVars && h.memoVars.length > 0))) {
+        // useMemo 선언 끝(;) 다음 줄에 계산된 값 로깅
+        const afterDecl = findStatementEndSplice(lines, h.line);
+        const depsVars = parseDepsToVars(h.deps);
+        const depsObj = depsVars.length > 0 ? `, { ${depsVars.join(', ')} }` : '';
+        if (h.memoVar) {
+          // 단순: const data = useMemo(...)
+          const smartLabel = getSmartLabel(h.memoVar);
+          const labelStr = smartLabel ? `${h.memoVar}(${smartLabel})` : h.memoVar;
+          const logArgs = `'[L:${lH.line}][useMemo] ${labelStr} =', ${h.memoVar}${depsObj}`;
+          addPoint(afterDecl, makeMarker(lH.line, logArgs, 'state'), 'state');
+        } else if (h.memoVars) {
+          // 구조분해: const { a, b } = useMemo(...) 또는 const [a, b] = useMemo(...)
+          const varsStr = h.memoVars.slice(0, 5).join(', ');
+          const logArgs = `'[L:${lH.line}][useMemo] { ${varsStr} } =', { ${h.memoVars.join(', ')} }${depsObj}`;
+          addPoint(afterDecl, makeMarker(lH.line, logArgs, 'state'), 'state');
+        }
       } else if (h.name === 'useEffect') {
-        // 콜백 body { 다음 줄에 삽입
+        // 콜백 body { 다음 줄에 삽입 + deps 변수값 로깅
         const bodyStart = findBodyStartSplice(lines, h.line);
         if (bodyStart !== null) {
           const depsStr = h.deps ? ` deps:${h.deps}` : '';
-          const logArgs = `'[L:${lH.line}][useEffect]${depsStr} 시작'`;
+          const depsVars = parseDepsToVars(h.deps);
+          const depsObj = depsVars.length > 0 ? `, { ${depsVars.join(', ')} }` : '';
+          const logArgs = `'[L:${lH.line}][useEffect]${depsStr} 시작'${depsObj}`;
           addPoint(bodyStart, makeMarker(lH.line, logArgs, 'effect'), 'effect');
+        }
+      }
+
+      // ── useMemo/useEffect 콜백 내부 변수 로깅 ──
+      if (h.name === 'useMemo' || h.name === 'useEffect') {
+        const cbStart = findBodyStartSplice(lines, h.line);
+        if (cbStart !== null) {
+          const cbEnd = findCallbackBodyEnd(lines, cbStart);
+          const cat: InjectionPoint['category'] = h.name === 'useMemo' ? 'state' : 'effect';
+
+          // useMemo 콜백 시작에 deps 값 로깅 (useEffect는 위에서 이미 처리)
+          if (h.name === 'useMemo') {
+            const depsVars = parseDepsToVars(h.deps);
+            if (depsVars.length > 0) {
+              const depsStr = h.deps ? ` deps:${h.deps}` : '';
+              const logArgs = `'[L:${lH.line}][useMemo]${depsStr} 시작', { ${depsVars.join(', ')} }`;
+              addPoint(cbStart, makeMarker(lH.line, logArgs, 'state'), 'state');
+            }
+          }
+
+          // 콜백 내부 const/let 변수 선언 스캔
+          for (let i = cbStart; i < cbEnd; i++) {
+            const ln = lines[i];
+            if (/\buse[A-Z]\w*\s*\(/.test(ln)) continue;
+            if (INNER_ARROW_RE.test(ln) || INNER_FUNC_RE.test(ln)) continue;
+
+            const vm = /^\s*(?:const|let|var)\s+([a-zA-Z_$][\w$]*)\s*=/.exec(ln);
+            if (!vm) continue;
+
+            const varName = vm[1];
+            const afterVarDecl = findStatementEndSplice(lines, i + 1);
+            const sl = getSmartLabel(varName);
+            const labelStr = sl ? `${varName}(${sl})` : varName;
+            const logArgs = `'[L:${i + 1}][${h.name}] ${labelStr} =', ${varName}`;
+            addPoint(afterVarDecl, makeMarker(i + 1, logArgs, cat), cat);
+          }
         }
       }
     }
@@ -454,6 +536,25 @@ export function predictExecutionOrder(result: AnalysisResult): ExecutionStep[] {
         phase: 'mount',
         label: `${h.stateVar || '상태'} = 초기값${sl ? ` (${sl})` : ''}`,
       });
+    }
+
+    for (const h of comp.hooks.filter(h => h.name === 'useMemo' && (h.memoVar || h.memoVars?.length))) {
+      const depsNote = h.deps ? ` deps:${h.deps}` : '';
+      if (h.memoVar) {
+        const sl = getSmartLabel(h.memoVar);
+        steps.push({
+          order: order++, line: h.line, category: 'state', phase: 'mount',
+          label: `useMemo → ${h.memoVar} 계산${sl ? ` (${sl})` : ''}`,
+          note: depsNote || undefined,
+        });
+      } else if (h.memoVars) {
+        const varsStr = h.memoVars.slice(0, 3).join(', ');
+        steps.push({
+          order: order++, line: h.line, category: 'state', phase: 'mount',
+          label: `useMemo → { ${varsStr} } 계산`,
+          note: depsNote || undefined,
+        });
+      }
     }
 
     steps.push({

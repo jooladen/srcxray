@@ -96,7 +96,8 @@ console.log('[L:42][MyComp][props]', { name, age });
 |----------|----------|
 | 컴포넌트 진입부 | `[L:12][MyComp][props] { name, onClick }` |
 | useState 직후 | `[L:15][state] count = 0` |
-| useEffect 진입부 | `[L:20][useEffect] deps: count` |
+| useMemo 선언 직후 | `[L:18][useMemo] filteredData =', filteredData, { items }` |
+| useEffect 진입부 | `[L:20][useEffect] deps:[count] 시작', { count }` |
 | 이벤트 핸들러 진입 | `[L:35][handleClick] 진입` |
 | return JSX 직전 | `[L:50][MyComp] render` |
 

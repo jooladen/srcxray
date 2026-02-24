@@ -12,6 +12,8 @@ export interface HookCall {
   name: string;
   stateVar?: string;
   setterVar?: string;
+  memoVar?: string;
+  memoVars?: string[];
   deps?: string;
   line: number;
 }
@@ -157,6 +159,23 @@ function extractHooksFromBody(body: Node[]): HookCall[] {
             const arr = decl.id as { elements: (Node | null)[] };
             hook.stateVar = arr.elements[0] ? extractText(arr.elements[0]) : undefined;
             hook.setterVar = arr.elements[1] ? extractText(arr.elements[1]) : undefined;
+          }
+          // useMemo/useCallback: capture variable name(s)
+          if (['useMemo', 'useCallback'].includes(hookName)) {
+            if (decl.id.type === 'Identifier') {
+              hook.memoVar = extractText(decl.id);
+            } else if (decl.id.type === 'ObjectPattern') {
+              const props = (decl.id as unknown as { properties: Array<{ value?: Node; key?: Node }> }).properties;
+              hook.memoVars = props
+                .map(p => { const t = p.value || p.key; return t ? extractText(t) : ''; })
+                .filter(Boolean);
+            } else if (decl.id.type === 'ArrayPattern') {
+              const elems = (decl.id as unknown as { elements: (Node | null)[] }).elements;
+              hook.memoVars = elems
+                .filter((e): e is Node => e !== null)
+                .map(e => extractText(e))
+                .filter(Boolean);
+            }
           }
           // useEffect/useCallback/useMemo: deps array
           if (['useEffect', 'useCallback', 'useMemo'].includes(hookName)) {
