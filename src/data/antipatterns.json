@@ -10,6 +10,10 @@
     "detect": {
       "type": "special",
       "handler": "fetchInUseMemo"
+    },
+    "codeExample": {
+      "bad": "const data = useMemo(() => {\n  const res = fetchData(id);\n  return res.items;\n}, [id]);",
+      "good": "const [data, setData] = useState([]);\nuseEffect(() => {\n  fetchData(id).then(res => setData(res.items));\n}, [id]);"
     }
   },
   {
