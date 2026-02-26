@@ -315,7 +315,7 @@ function matchSpecial(handler: string, lines: string[], result: AnalysisResult):
 
 function detectFetchInUseMemo(lines: string[]): number[] {
   const matched: number[] = [];
-  const fetchPattern = /\b(fetch\w*|load\w*|get[A-Z]\w*Data|axios|api\.|http\.|\.get\(|\.post\()\b/;
+  const fetchPattern = /\b(fetch\w*|load\w*|get[A-Z]\w+|axios|api\.|http\.|\.get\(|\.post\()\b/;
 
   for (let i = 0; i < lines.length; i++) {
     if (/\buseMemo\s*\(/.test(lines[i])) {
