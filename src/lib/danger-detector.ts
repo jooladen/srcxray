@@ -401,7 +401,8 @@ function detectEffectAsDerived(lines: string[], result: AnalysisResult): number[
     ).join('\n');
     // setter를 호출하면서 fetch/subscribe 등 사이드이펙트가 없는 경우
     const callsSetter = setterNames.some(s => effectArea.includes(s + '('));
-    const hasSideEffect = /\b(fetch|axios|subscribe|addEventListener|setInterval|setTimeout)\s*\(/.test(effectArea);
+    const hasSideEffect = /\b(fetch\w*|load\w*|get[A-Z]\w+|axios\w*|subscribe|addEventListener|setInterval|setTimeout)\b/.test(effectArea)
+      || /\.then\s*\(/.test(effectArea);
     if (callsSetter && !hasSideEffect) {
       matched.push(effect.line);
     }
@@ -525,6 +526,10 @@ function detectSetStateInEffectNoCondition(lines: string[], result: AnalysisResu
     // setter 호출이 있는지 확인
     const callsSetter = setterNames.some(s => body.includes(s + '('));
     if (!callsSetter) continue;
+
+    // 비동기 콜백(.then, async/await) 안의 setState는 무한 루프 위험 없음
+    const hasAsyncPattern = /\.then\s*\(|await\s/.test(body);
+    if (hasAsyncPattern) continue;
 
     // if/switch/? 같은 조건문이 있는지 확인
     const hasCondition = /\b(if|switch)\s*\(|[^=!<>]=.*\?/.test(body);
