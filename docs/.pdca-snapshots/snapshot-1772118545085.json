@@ -1,0 +1,1422 @@
+{
+  "timestamp": "2026-02-26T15:09:05.083Z",
+  "reason": "compaction",
+  "status": {
+    "version": "2.0",
+    "lastUpdated": "2026-02-26T15:08:46.751Z",
+    "activeFeatures": [
+      "srcxray",
+      "wow-features",
+      "wow-features-v2",
+      "zero-script-qa",
+      "debug-injector Gap 분석",
+      ".claude",
+      "antipattern-detector"
+    ],
+    "primaryFeature": "antipattern-detector",
+    "features": {
+      "wow-features": {
+        "phase": "act",
+        "phaseNumber": 5,
+        "matchRate": 91,
+        "iterationCount": 1,
+        "requirements": [
+          "F-01 파일 한줄요약",
+          "F-02 훅 번역",
+          "F-03 데이터흐름",
+          "F-04 복잡도히트맵"
+        ],
+        "documents": {
+          "plan": "docs/01-plan/features/wow-features.plan.md",
+          "design": "docs/02-design/features/wow-features.design.md"
+        },
+        "timestamps": {
+          "started": "2026-02-22T13:00:00.000Z",
+          "lastUpdated": "2026-02-22T13:00:00.000Z"
+        }
+      },
+      "wow-features-v2": {
+        "phase": "completed",
+        "phaseNumber": 5,
+        "matchRate": 97,
+        "iterationCount": 0,
+        "requirements": [
+          "F-07 샘플 코드 즉시 분석",
+          "F-08 LearningGuide 체크박스",
+          "F-09 통계 카운트업 애니메이션",
+          "F-10 훅 번역 카드 탭",
+          "F-11 패턴 동기부여 카드",
+          "F-12 복잡도 이유 툴팁"
+        ],
+        "documents": {
+          "plan": "docs/01-plan/features/wow-features-v2.plan.md",
+          "design": "docs/02-design/features/wow-features-v2.design.md"
+        },
+        "timestamps": {
+          "started": "2026-02-22T14:00:00.000Z",
+          "lastUpdated": "2026-02-22T14:00:00.000Z"
+        }
+      },
+      "srcxray": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-02-22T12:37:33.055Z",
+          "lastUpdated": "2026-02-26T15:08:46.751Z"
+        },
+        "lastFile": "C:\\Users\\jooladen\\Desktop\\cluade-code2\\srcxray\\src\\lib\\danger-detector.ts"
+      },
+      "zero-script-qa": {
+        "phase": "completed",
+        "phaseNumber": 5,
+        "matchRate": 100,
+        "iterationCount": 3,
+        "qaType": "BugFix",
+        "testCycles": 3,
+        "testCaseCount": 64,
+        "testPassRate": 100,
+        "bugCount": 4,
+        "bugsFixed": [
+          "BUG-001 (HIGH): Destructured Props Not Extracted",
+          "BUG-002 (MEDIUM): Async-Effect Deduplication Bug",
+          "BUG-003 (LOW): Clipboard Copy Error Handling",
+          "BUG-004 (HIGH): useEffect Standalone Calls Not Detected"
+        ],
+        "modifiedFiles": [
+          "src/lib/parser.ts",
+          "src/lib/danger-detector.ts",
+          "src/components/TldrCard.tsx"
+        ],
+        "requirements": [
+          "QA-01 Parser AST Handling",
+          "QA-02 Hook Detection",
+          "QA-03 Risk Detection",
+          "QA-04 Browser API Error Handling",
+          "QA-05 Integration Validation"
+        ],
+        "documents": {
+          "report": "docs/04-report/zero-script-qa.report.md"
+        },
+        "timestamps": {
+          "started": "2026-02-23T09:00:00.000Z",
+          "completed": "2026-02-23T16:00:00.000Z",
+          "lastUpdated": "2026-02-23T16:00:00.000Z"
+        }
+      },
+      "debug-injector": {
+        "phase": "completed",
+        "phaseNumber": 6,
+        "matchRate": 93,
+        "iterationCount": 0,
+        "requirements": [
+          "DI-01 injectLogs 코어 엔진",
+          "DI-02 Smart Labels (WOW-02)",
+          "DI-03 Execution Order Prediction (WOW-01)",
+          "DI-04 UI Map Extractor + CSV",
+          "DI-05 5-Step Wizard Panel",
+          "DI-06 Expression Body Handling"
+        ],
+        "documents": {
+          "plan": "docs/01-plan/features/debug-injector.plan.md",
+          "design": "docs/02-design/features/debug-injector.design.md",
+          "analysis": "docs/03-analysis/debug-injector.analysis.md",
+          "report": "docs/04-report/features/debug-injector.report.md"
+        },
+        "timestamps": {
+          "started": "2026-02-23T11:36:50.516Z",
+          "lastUpdated": "2026-02-23T17:00:00.000Z"
+        },
+        "bugFixed": "expression body line offset adjustment"
+      },
+      "antipattern-detector": {
+        "phase": "completed",
+        "phaseNumber": 6,
+        "matchRate": 98,
+        "iterationCount": 1,
+        "requirements": [
+          "AP-01 antipatterns.json 데이터 파일",
+          "AP-02 초기 안티패턴 18개 → 30개 확장",
+          "AP-03 danger-detector 리팩터링",
+          "AP-04 패턴 매칭 엔진 (4가지 detect 타입)",
+          "AP-05 UI critical 레벨",
+          "AP-06 matchCount 버그 수정",
+          "AP-07 special 핸들러 5개 추가",
+          "AP-08 DangerItem.codeExample 필드",
+          "AP-09 점수 대시보드 (100점 기반)",
+          "AP-10 카테고리 필터 Pills",
+          "AP-11 접이식 카드 UI",
+          "AP-12 코드 예시 Before/After"
+        ],
+        "documents": {
+          "plan": "docs/01-plan/features/antipattern-detector.plan.md",
+          "design": "docs/02-design/features/antipattern-detector.design.md",
+          "analysis": "docs/03-analysis/antipattern-detector.analysis.md",
+          "report": "docs/04-report/features/antipattern-detector.report.md"
+        },
+        "timestamps": {
+          "started": "2026-02-26T13:30:00.000Z",
+          "lastUpdated": "2026-02-26T15:30:00.000Z"
+        }
+      },
+      ".claude": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-02-26T12:24:22.245Z",
+          "lastUpdated": "2026-02-26T12:45:19.332Z"
+        },
+        "lastFile": "C:/Users/jooladen/.claude/statusline.js"
+      }
+    },
+    "pipeline": {
+      "currentPhase": 1,
+      "level": "Dynamic",
+      "phaseHistory": []
+    },
+    "session": {
+      "startedAt": "2026-02-22T12:26:53.171Z",
+      "onboardingCompleted": false,
+      "lastActivity": "2026-02-26T15:08:46.751Z"
+    },
+    "history": [
+      {
+        "timestamp": "2026-02-23T09:00:00.000Z",
+        "feature": "zero-script-qa",
+        "phase": "check",
+        "action": "started"
+      },
+      {
+        "timestamp": "2026-02-23T09:30:00.000Z",
+        "feature": "zero-script-qa",
+        "phase": "check",
+        "action": "cycle1-completed"
+      },
+      {
+        "timestamp": "2026-02-23T11:00:00.000Z",
+        "feature": "zero-script-qa",
+        "phase": "check",
+        "action": "cycle2-completed"
+      },
+      {
+        "timestamp": "2026-02-23T14:00:00.000Z",
+        "feature": "zero-script-qa",
+        "phase": "check",
+        "action": "cycle3-completed"
+      },
+      {
+        "timestamp": "2026-02-23T16:00:00.000Z",
+        "feature": "zero-script-qa",
+        "phase": "completed",
+        "action": "report-generated"
+      },
+      {
+        "timestamp": "2026-02-22T16:22:50.986Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:22:54.943Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:23:01.401Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:23:05.408Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:23:09.315Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:23:12.458Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:23:16.413Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:23:20.890Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:23:24.941Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:33:35.591Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:41:01.316Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:41:08.233Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:45:08.475Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:45:11.645Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:45:17.702Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:45:21.356Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:45:27.337Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:45:32.963Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:45:36.606Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:46:55.720Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T16:51:08.176Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:05:40.190Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:05:50.497Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:05:56.813Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:06:04.510Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:06:13.304Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:06:23.479Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:06:32.757Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:06:37.673Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:06:49.653Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:06:59.334Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:07:08.344Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:07:19.874Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:07:24.374Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:07:30.536Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:07:35.514Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:07:42.892Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:07:51.561Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:08:04.635Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:08:22.836Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:08:31.217Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:08:38.418Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:08:42.621Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:08:50.652Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:09:02.666Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:09:09.318Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:09:20.465Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:09:36.559Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:10:20.234Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:25:31.087Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:25:35.239Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:25:40.132Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:31:00.880Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:31:54.409Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:32:32.266Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:32:58.954Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:34:36.537Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:35:22.255Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-22T17:35:30.494Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T11:29:56.861Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T11:31:15.570Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T11:31:29.714Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T11:31:34.104Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T11:36:50.517Z",
+        "feature": "debug-injector Gap 분석",
+        "phase": "act",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T11:42:15.041Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T11:42:19.201Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T12:01:24.055Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T12:20:12.964Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T12:20:25.018Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T12:45:49.795Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T12:47:00.305Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:03:51.079Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:04:03.452Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:04:11.885Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:04:17.953Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:04:26.149Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:04:30.394Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:04:34.400Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:04:39.987Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:04:55.961Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:12:53.887Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:13:01.326Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:17:37.255Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:17:43.051Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:17:47.460Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:26:12.902Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:26:37.770Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:26:46.711Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:26:58.507Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:27:08.955Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:42:37.772Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:53:40.301Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:59:09.233Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T13:59:27.622Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T14:11:10.117Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T14:11:16.812Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T14:11:20.922Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T14:11:29.680Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T14:11:33.474Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T14:39:04.123Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T14:52:09.851Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T14:52:29.681Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T14:52:35.097Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T14:52:44.407Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T14:52:53.651Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T14:53:11.465Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T15:01:25.918Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T15:40:09.209Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:09:45.320Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:09:50.549Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:09:55.615Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:10:00.524Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:10:06.154Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:10:12.562Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:19:00.667Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:19:05.388Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:33:10.929Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:33:16.082Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:33:23.192Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:33:35.036Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:33:48.441Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:34:02.483Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:34:20.495Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:34:28.206Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:34:44.843Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:34:59.983Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:43:09.891Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:43:14.691Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:43:28.411Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:43:39.630Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-23T16:43:54.393Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-24T15:19:48.687Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-24T15:20:08.140Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-24T15:20:33.386Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-24T15:20:48.776Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-24T15:21:10.145Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-24T15:35:52.588Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-24T15:36:12.003Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-24T15:36:35.714Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-24T15:36:56.968Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-24T15:44:04.373Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-24T15:44:38.903Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-24T16:14:02.847Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:10:25.017Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:16:15.129Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:16:38.895Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:16:51.491Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:17:05.665Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:17:23.776Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:17:36.771Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:17:49.512Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:18:02.314Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:18:16.262Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:18:28.427Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:18:41.774Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:18:56.719Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:19:14.154Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:19:30.059Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:20:40.389Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:49:24.525Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:49:41.936Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:50:00.584Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:50:16.517Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:50:32.980Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:50:46.318Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:51:20.404Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:51:36.290Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:51:50.994Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:52:14.319Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:52:28.069Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:52:41.101Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:52:54.537Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T11:53:13.151Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T12:06:22.066Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T12:06:35.024Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T12:24:22.245Z",
+        "feature": ".claude",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T12:39:35.427Z",
+        "feature": ".claude",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T12:39:58.957Z",
+        "feature": ".claude",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T12:43:54.585Z",
+        "feature": ".claude",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T12:44:27.453Z",
+        "feature": ".claude",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T12:45:19.332Z",
+        "feature": ".claude",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T13:30:11.027Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T13:30:54.585Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T13:55:33.282Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T14:08:19.850Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T14:08:33.849Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T14:12:12.003Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T14:12:39.229Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T14:23:14.436Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T14:23:28.736Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T14:23:48.066Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T14:24:14.084Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T14:26:00.860Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T14:26:37.748Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T14:27:36.453Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T14:44:33.705Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T14:44:52.403Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T14:45:08.091Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T14:48:29.635Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-26T15:08:46.751Z",
+        "feature": "srcxray",
+        "phase": "do",
+        "action": "updated"
+      }
+    ]
+  }
+}

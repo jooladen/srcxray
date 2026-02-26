@@ -288,6 +288,8 @@ function matchCount(detect: DetectCount, result: AnalysisResult): number[] {
 
 function matchSpecial(handler: string, lines: string[], result: AnalysisResult): number[] {
   switch (handler) {
+    case 'fetchInUseMemo':
+      return detectFetchInUseMemo(lines);
     case 'infiniteLoop':
       return detectInfiniteLoop(lines, result);
     case 'mapNoKey':
@@ -309,6 +311,23 @@ function matchSpecial(handler: string, lines: string[], result: AnalysisResult):
     default:
       return [];
   }
+}
+
+function detectFetchInUseMemo(lines: string[]): number[] {
+  const matched: number[] = [];
+  const fetchPattern = /\b(fetch\w*|load\w*|get[A-Z]\w*Data|axios|api\.|http\.|\.get\(|\.post\()\b/;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (/\buseMemo\s*\(/.test(lines[i])) {
+      const end = findClosingCurlyBrace(lines, i);
+      for (let j = i; j <= end; j++) {
+        if (fetchPattern.test(lines[j])) {
+          matched.push(j + 1);
+        }
+      }
+    }
+  }
+  return matched.length > 0 ? matched : [-1];
 }
 
 function detectInfiniteLoop(lines: string[], result: AnalysisResult): number[] {

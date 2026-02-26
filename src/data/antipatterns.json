@@ -8,9 +8,8 @@
     "why": "useMemo는 렌더링 중 동기적으로 실행됩니다. fetch/load/get 계열 함수가 지금은 동기라도 나중에 async API로 바뀌면 즉시 깨집니다.",
     "fix": "useEffect + useState 조합으로 데이터를 fetch하세요. 또는 React Query/SWR을 사용하세요.",
     "detect": {
-      "type": "regex-context",
-      "pattern": "\\b(fetch\\w*|load\\w*|get[A-Z]\\w*Data|axios|api\\.|http\\.)\\s*\\(",
-      "context": { "scope": "hook-body", "hookName": "useMemo" }
+      "type": "special",
+      "handler": "fetchInUseMemo"
     }
   },
   {
