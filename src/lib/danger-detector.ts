@@ -211,6 +211,14 @@ function getComponentBodyRanges(
         }
       }
     }
+    // return 문 이후(JSX 영역)도 제외 — JSX 이벤트 핸들러 안의 setState는 정상
+    for (let i = start; i <= end && i < lines.length; i++) {
+      if (/^\s*return\s*[\s(]/.test(lines[i])) {
+        excludeRanges.push([i, end]);
+        break;
+      }
+    }
+
     // 컴포넌트 범위에서 중첩 스코프를 뺀 줄만 추가
     for (let i = start; i <= end; i++) {
       const isExcluded = excludeRanges.some(([s, e]) => i >= s && i <= e);
