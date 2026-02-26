@@ -285,7 +285,7 @@ export default function DebugInjectorPanel({ code, result, fileName }: Props) {
         import('@/lib/debug-injector'),
         import('@/lib/ui-map-extractor'),
       ]);
-      const injResult = injectLogs(code, result);
+      const injResult = injectLogs(code, result, fileName);
       const execSteps = predictExecutionOrder(result);
       const { elements: uiElements, childComponents } = extractUiMap(code, result);
       if (!cancelled) {
@@ -302,7 +302,7 @@ export default function DebugInjectorPanel({ code, result, fileName }: Props) {
       }
     })();
     return () => { cancelled = true; };
-  }, [code, result]);
+  }, [code, result, fileName]);
 
   // ② Step 2 카운트업 애니메이션
   useEffect(() => {

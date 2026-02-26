@@ -1,14 +1,16 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-02-24T16:14:02.848Z",
+  "lastUpdated": "2026-02-26T14:48:29.635Z",
   "activeFeatures": [
     "srcxray",
     "wow-features",
     "wow-features-v2",
     "zero-script-qa",
-    "debug-injector Gap 분석"
+    "debug-injector Gap 분석",
+    ".claude",
+    "antipattern-detector"
   ],
-  "primaryFeature": "zero-script-qa",
+  "primaryFeature": "antipattern-detector",
   "features": {
     "wow-features": {
       "phase": "act",
@@ -61,9 +63,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T12:37:33.055Z",
-        "lastUpdated": "2026-02-24T16:14:02.847Z"
+        "lastUpdated": "2026-02-26T14:48:29.635Z"
       },
-      "lastFile": "C:/Users/jooladen/Desktop/cluade-code2/srcxray/src/components/DebugInjectorPanel.tsx"
+      "lastFile": "C:\\Users\\jooladen\\Desktop\\cluade-code2\\srcxray\\src\\components\\CodeInput.tsx"
     },
     "zero-script-qa": {
       "phase": "completed",
@@ -126,6 +128,49 @@
         "lastUpdated": "2026-02-23T17:00:00.000Z"
       },
       "bugFixed": "expression body line offset adjustment"
+    },
+    "antipattern-detector": {
+      "phase": "completed",
+      "phaseNumber": 6,
+      "matchRate": 98,
+      "iterationCount": 1,
+      "requirements": [
+        "AP-01 antipatterns.json 데이터 파일",
+        "AP-02 초기 안티패턴 18개 → 30개 확장",
+        "AP-03 danger-detector 리팩터링",
+        "AP-04 패턴 매칭 엔진 (4가지 detect 타입)",
+        "AP-05 UI critical 레벨",
+        "AP-06 matchCount 버그 수정",
+        "AP-07 special 핸들러 5개 추가",
+        "AP-08 DangerItem.codeExample 필드",
+        "AP-09 점수 대시보드 (100점 기반)",
+        "AP-10 카테고리 필터 Pills",
+        "AP-11 접이식 카드 UI",
+        "AP-12 코드 예시 Before/After"
+      ],
+      "documents": {
+        "plan": "docs/01-plan/features/antipattern-detector.plan.md",
+        "design": "docs/02-design/features/antipattern-detector.design.md",
+        "analysis": "docs/03-analysis/antipattern-detector.analysis.md",
+        "report": "docs/04-report/features/antipattern-detector.report.md"
+      },
+      "timestamps": {
+        "started": "2026-02-26T13:30:00.000Z",
+        "lastUpdated": "2026-02-26T15:30:00.000Z"
+      }
+    },
+    ".claude": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-26T12:24:22.245Z",
+        "lastUpdated": "2026-02-26T12:45:19.332Z"
+      },
+      "lastFile": "C:/Users/jooladen/.claude/statusline.js"
     }
   },
   "pipeline": {
@@ -136,7 +181,7 @@
   "session": {
     "startedAt": "2026-02-22T12:26:53.171Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-02-24T16:14:02.848Z"
+    "lastActivity": "2026-02-26T14:48:29.635Z"
   },
   "history": [
     {
@@ -1023,6 +1068,342 @@
     },
     {
       "timestamp": "2026-02-24T16:14:02.847Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:10:25.017Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:16:15.129Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:16:38.895Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:16:51.491Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:17:05.665Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:17:23.776Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:17:36.771Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:17:49.512Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:18:02.314Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:18:16.262Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:18:28.427Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:18:41.774Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:18:56.719Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:19:14.154Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:19:30.059Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:20:40.389Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:49:24.525Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:49:41.936Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:50:00.584Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:50:16.517Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:50:32.980Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:50:46.318Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:51:20.404Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:51:36.290Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:51:50.994Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:52:14.319Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:52:28.069Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:52:41.101Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:52:54.537Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T11:53:13.151Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T12:06:22.066Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T12:06:35.024Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T12:24:22.245Z",
+      "feature": ".claude",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T12:39:35.427Z",
+      "feature": ".claude",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T12:39:58.957Z",
+      "feature": ".claude",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T12:43:54.585Z",
+      "feature": ".claude",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T12:44:27.453Z",
+      "feature": ".claude",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T12:45:19.332Z",
+      "feature": ".claude",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T13:30:11.027Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T13:30:54.585Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T13:55:33.282Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T14:08:19.850Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T14:08:33.849Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T14:12:12.003Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T14:12:39.229Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T14:23:14.436Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T14:23:28.736Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T14:23:48.066Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T14:24:14.084Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T14:26:00.860Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T14:26:37.748Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T14:27:36.453Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T14:44:33.705Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T14:44:52.403Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T14:45:08.091Z",
+      "feature": "srcxray",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T14:48:29.635Z",
       "feature": "srcxray",
       "phase": "do",
       "action": "updated"

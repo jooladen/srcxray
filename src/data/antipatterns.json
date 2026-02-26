@@ -1,0 +1,363 @@
+[
+  {
+    "id": "fetch-in-usememo",
+    "level": "critical",
+    "category": "hooks",
+    "emoji": "🚨",
+    "title": "useMemo 안에서 데이터 fetch/로딩 함수 호출 금지",
+    "why": "useMemo는 렌더링 중 동기적으로 실행됩니다. fetch/load/get 계열 함수가 지금은 동기라도 나중에 async API로 바뀌면 즉시 깨집니다.",
+    "fix": "useEffect + useState 조합으로 데이터를 fetch하세요. 또는 React Query/SWR을 사용하세요.",
+    "detect": {
+      "type": "regex-context",
+      "pattern": "\\b(fetch\\w*|load\\w*|get[A-Z]\\w*Data|axios|api\\.|http\\.)\\s*\\(",
+      "context": { "scope": "hook-body", "hookName": "useMemo" }
+    }
+  },
+  {
+    "id": "fetch-in-render",
+    "level": "critical",
+    "category": "rendering",
+    "emoji": "🚨",
+    "title": "컴포넌트 본문에서 직접 fetch 호출",
+    "why": "매 렌더링마다 네트워크 요청이 발생합니다. 무한 요청 + 성능 재앙.",
+    "fix": "useEffect 안에서 fetch하거나, React Query/SWR을 사용하세요.",
+    "detect": {
+      "type": "regex-context",
+      "pattern": "\\b(fetch|axios)\\s*\\(",
+      "context": { "scope": "component-body" }
+    }
+  },
+  {
+    "id": "setstate-in-render",
+    "level": "critical",
+    "category": "rendering",
+    "emoji": "🚨",
+    "title": "렌더링 중 setState 직접 호출",
+    "why": "컴포넌트 본문에서 setState → 리렌더 → setState → 무한 루프!",
+    "fix": "setState는 이벤트 핸들러나 useEffect 안에서만 호출하세요.",
+    "detect": {
+      "type": "regex-context",
+      "pattern": "\\bset[A-Z]\\w*\\s*\\(",
+      "context": { "scope": "component-body" }
+    }
+  },
+  {
+    "id": "mutate-state-direct",
+    "level": "critical",
+    "category": "state",
+    "emoji": "🚨",
+    "title": "state 객체/배열 직접 변경 금지",
+    "why": "React는 참조 비교로 변경을 감지합니다. 직접 변경하면 리렌더가 일어나지 않아요.",
+    "fix": "스프레드 연산자 [...arr] 또는 structuredClone()으로 새 객체를 만드세요.",
+    "detect": {
+      "type": "special",
+      "handler": "mutateStateDirect"
+    },
+    "codeExample": {
+      "bad": "// ❌ 직접 변경 — React가 변화를 감지 못함\nitems.push(newItem);\nsetItems(items);",
+      "good": "// ✅ 새 배열 생성\nsetItems([...items, newItem]);\n// 또는 structuredClone\nsetItems(prev => [...prev, newItem]);"
+    }
+  },
+  {
+    "id": "hooks-in-condition",
+    "level": "critical",
+    "category": "hooks",
+    "emoji": "🚨",
+    "title": "조건문/반복문 안에서 Hook 호출 금지",
+    "why": "React Hook은 매 렌더링마다 같은 순서로 호출되어야 합니다. 조건부 호출 시 순서가 꼬여요.",
+    "fix": "Hook은 항상 컴포넌트 최상위 레벨에서 호출하세요. 조건 로직은 Hook 내부에 넣으세요.",
+    "detect": {
+      "type": "regex-context",
+      "pattern": "\\buse[A-Z]\\w*\\s*\\(",
+      "context": { "scope": "condition" }
+    },
+    "codeExample": {
+      "bad": "// ❌ 조건문 안에서 Hook 호출\nif (isLoggedIn) {\n  const [user, setUser] = useState(null);\n}",
+      "good": "// ✅ 항상 최상위에서 호출\nconst [user, setUser] = useState(null);\n// 조건 로직은 Hook 바깥에서\nif (isLoggedIn) { /* user 사용 */ }"
+    }
+  },
+  {
+    "id": "hooks-in-callback",
+    "level": "critical",
+    "category": "hooks",
+    "emoji": "🚨",
+    "title": "이벤트 핸들러/콜백 안에서 Hook 호출 금지",
+    "why": "Hook은 React 렌더링 사이클에서만 동작합니다. 콜백에서 호출하면 에러가 발생해요.",
+    "fix": "Hook은 컴포넌트 최상위에서 호출하고, 콜백에서는 Hook의 반환값만 사용하세요.",
+    "detect": {
+      "type": "regex-context",
+      "pattern": "\\buse[A-Z]\\w*\\s*\\(",
+      "context": { "scope": "callback" }
+    }
+  },
+  {
+    "id": "async-effect",
+    "level": "high",
+    "category": "hooks",
+    "emoji": "🔄",
+    "title": "useEffect에 async 직접 사용",
+    "why": "비동기 함수를 직접 전달하면 클린업이 불가능하고 메모리 누수가 생길 수 있어요.",
+    "fix": "useEffect 내부에 async 함수를 별도로 선언하고 호출하세요.",
+    "detect": { "type": "regex", "pattern": "useEffect\\s*\\(\\s*async" },
+    "codeExample": {
+      "bad": "// ❌ async를 직접 전달\nuseEffect(async () => {\n  const data = await fetchData();\n  setData(data);\n}, []);",
+      "good": "// ✅ 내부에 async 함수 선언\nuseEffect(() => {\n  const load = async () => {\n    const data = await fetchData();\n    setData(data);\n  };\n  load();\n}, []);"
+    }
+  },
+  {
+    "id": "infinite-loop",
+    "level": "high",
+    "category": "hooks",
+    "emoji": "♾️",
+    "title": "useEffect 무한 루프 위험",
+    "why": "deps 없는 useEffect에서 setState를 호출하면 렌더링 → useEffect → setState 무한 반복!",
+    "fix": "useEffect 두 번째 인수에 의존하는 값 배열 []을 추가하세요.",
+    "detect": { "type": "special", "handler": "infiniteLoop" },
+    "codeExample": {
+      "bad": "// ❌ deps 없이 setState 호출 → 무한 루프\nuseEffect(() => {\n  setCount(count + 1);\n});",
+      "good": "// ✅ deps 배열 추가\nuseEffect(() => {\n  setCount(c => c + 1);\n}, []); // 마운트 시 한 번만"
+    }
+  },
+  {
+    "id": "dangerously-set-html",
+    "level": "high",
+    "category": "security",
+    "emoji": "⚠️",
+    "title": "dangerouslySetInnerHTML 사용 — XSS 위험",
+    "why": "외부 데이터를 HTML로 주입하면 스크립트 실행 공격(XSS)에 노출됩니다.",
+    "fix": "가능하면 React 컴포넌트로 렌더링하세요. 불가피하면 DOMPurify로 sanitize 후 사용.",
+    "detect": { "type": "regex", "pattern": "dangerouslySetInnerHTML" }
+  },
+  {
+    "id": "useeffect-missing-cleanup",
+    "level": "high",
+    "category": "hooks",
+    "emoji": "🧹",
+    "title": "useEffect에서 구독/타이머 클린업 누락",
+    "why": "addEventListener, setInterval, subscribe 등을 useEffect에서 등록하고 해제하지 않으면 메모리 누수!",
+    "fix": "useEffect의 return 함수에서 removeEventListener, clearInterval 등으로 정리하세요.",
+    "detect": {
+      "type": "regex-context",
+      "pattern": "\\b(addEventListener|setInterval|setTimeout|subscribe)\\s*\\(",
+      "context": { "scope": "hook-body", "hookName": "useEffect" }
+    }
+  },
+  {
+    "id": "missing-effect-deps",
+    "level": "high",
+    "category": "hooks",
+    "emoji": "🎯",
+    "title": "useEffect 빈 deps에서 외부 상태 참조",
+    "why": "빈 의존성 배열 []인데 본문에서 state/memo 변수를 참조하면 오래된 값(stale closure)을 사용합니다.",
+    "fix": "참조하는 변수를 deps 배열에 추가하거나, useCallback/useRef로 감싸세요.",
+    "detect": { "type": "special", "handler": "missingEffectDeps" }
+  },
+  {
+    "id": "setstate-in-effect-no-condition",
+    "level": "high",
+    "category": "hooks",
+    "emoji": "🔥",
+    "title": "useEffect에서 조건 없이 setState 호출",
+    "why": "deps가 있는 useEffect에서 무조건 setState를 호출하면 deps 변경 → setState → 리렌더 → deps 변경 무한 반복 위험!",
+    "fix": "setState 호출을 조건문(if)으로 감싸거나, useMemo로 대체하세요.",
+    "detect": { "type": "special", "handler": "setStateInEffectNoCondition" }
+  },
+  {
+    "id": "map-no-key",
+    "level": "medium",
+    "category": "rendering",
+    "emoji": "🔑",
+    "title": ".map()에 key prop 누락",
+    "why": "React가 목록 항목을 구별 못해서 잘못된 곳이 업데이트되거나 버그가 생겨요.",
+    "fix": "목록 최상위 요소에 고유한 key={item.id}를 추가하세요.",
+    "detect": { "type": "special", "handler": "mapNoKey" }
+  },
+  {
+    "id": "index-as-key",
+    "level": "medium",
+    "category": "rendering",
+    "emoji": "🔢",
+    "title": "key={index} 사용 — 목록 변경 시 버그",
+    "why": "항목 추가/삭제/재정렬 시 index가 바뀌어 React가 DOM을 잘못 매칭해요.",
+    "fix": "고유한 ID 값을 key로 사용하세요. 없으면 crypto.randomUUID()로 생성.",
+    "detect": { "type": "regex", "pattern": "key=\\{\\s*(i|idx|index)\\s*\\}" }
+  },
+  {
+    "id": "object-literal-in-jsx",
+    "level": "low",
+    "category": "performance",
+    "emoji": "🔁",
+    "title": "JSX에 인라인 객체/배열 리터럴",
+    "why": "자식이 React.memo로 감싸져 있으면 매 렌더링마다 새 참조 → 불필요한 리렌더. memo가 없으면 영향 없음.",
+    "fix": "자식이 React.memo를 쓸 때만 useMemo로 감싸세요. memo가 아니면 무시해도 됩니다.",
+    "detect": { "type": "regex", "pattern": "(?:style|className|options|data|config)=\\{\\{" }
+  },
+  {
+    "id": "useeffect-as-derived",
+    "level": "medium",
+    "category": "hooks",
+    "emoji": "🔀",
+    "title": "useEffect로 파생 상태 계산 — useMemo로 대체 가능",
+    "why": "불필요한 리렌더 1회가 추가로 발생합니다. useEffect는 사이드이펙트 전용!",
+    "fix": "const derived = useMemo(() => compute(a, b), [a, b]) 로 대체하세요.",
+    "detect": { "type": "special", "handler": "effectAsDerived" }
+  },
+  {
+    "id": "no-error-boundary",
+    "level": "medium",
+    "category": "rendering",
+    "emoji": "💥",
+    "title": "에러 바운더리 없이 async 데이터 렌더링",
+    "why": "런타임 에러 발생 시 전체 앱이 흰 화면으로 크래시됩니다.",
+    "fix": "ErrorBoundary 컴포넌트로 감싸거나 Suspense + fallback을 사용하세요.",
+    "detect": { "type": "regex", "pattern": "\\bSuspense\\b(?!.*fallback)|throw\\s+new\\s+Error" }
+  },
+  {
+    "id": "inline-function-in-jsx",
+    "level": "low",
+    "category": "performance",
+    "emoji": "⚡",
+    "title": "JSX에 인라인 함수 — 매 렌더링 재생성",
+    "why": "자식이 React.memo로 감싸져 있으면 새 함수 참조 → 불필요한 리렌더. memo가 없으면 부모 리렌더 시 어차피 자식도 리렌더되므로 영향 없음.",
+    "fix": "자식이 React.memo를 쓸 때만 useCallback으로 감싸세요. 그 외에는 가독성을 우선하세요.",
+    "detect": { "type": "regex", "pattern": "\\b(onClick|onChange|onSubmit)=\\{\\s*\\(?[^)]*\\)?\\s*=>\\s*[^}]" }
+  },
+  {
+    "id": "nested-ternary-jsx",
+    "level": "medium",
+    "category": "rendering",
+    "emoji": "🌀",
+    "title": "JSX에 중첩 삼항 연산자 — 가독성 저하",
+    "why": "삼항 안에 삼항이 중첩되면 코드를 읽기 매우 어려워집니다. 버그 발생률이 높아져요.",
+    "fix": "조기 return 패턴이나 별도 컴포넌트로 분리하세요.",
+    "detect": { "type": "regex", "pattern": "\\?[^:]*\\?[^:]*:" }
+  },
+  {
+    "id": "no-suspense-fallback",
+    "level": "medium",
+    "category": "rendering",
+    "emoji": "⏳",
+    "title": "Suspense에 fallback 누락",
+    "why": "fallback 없는 Suspense는 로딩 중 아무것도 표시하지 않아 사용자 경험이 나빠요.",
+    "fix": "<Suspense fallback={<Loading />}>으로 로딩 UI를 반드시 지정하세요.",
+    "detect": { "type": "regex", "pattern": "<Suspense(?![^>]*fallback)" }
+  },
+  {
+    "id": "too-many-props",
+    "level": "medium",
+    "category": "state",
+    "emoji": "📦",
+    "title": "Props 6개 이상 — 컴포넌트 분리 고려",
+    "why": "props가 너무 많으면 컴포넌트 역할이 모호해지고 재사용하기 어려워요.",
+    "fix": "관련 props를 객체로 묶거나, 컴포넌트를 더 작은 단위로 분리하세요.",
+    "detect": { "type": "special", "handler": "tooManyProps" }
+  },
+  {
+    "id": "unused-state",
+    "level": "low",
+    "category": "state",
+    "emoji": "👻",
+    "title": "선언만 하고 사용하지 않는 useState",
+    "why": "불필요한 상태는 메모리를 낭비하고, 코드를 읽는 사람을 혼란스럽게 합니다.",
+    "fix": "사용하지 않는 useState를 제거하세요.",
+    "detect": { "type": "special", "handler": "unusedState" }
+  },
+  {
+    "id": "context-value-inline",
+    "level": "medium",
+    "category": "performance",
+    "emoji": "🔄",
+    "title": "Context value에 인라인 객체 — 불필요한 리렌더",
+    "why": "Provider의 value에 매번 새 객체를 전달하면 useContext를 쓰는 모든 Consumer가 리렌더됩니다. (이건 memo 유무와 무관하게 항상 영향)",
+    "fix": "useMemo로 value를 메모이제이션하세요.",
+    "detect": { "type": "regex", "pattern": "\\.Provider\\s+value=\\{\\{" }
+  },
+  {
+    "id": "array-includes-in-render",
+    "level": "medium",
+    "category": "performance",
+    "emoji": "🐌",
+    "title": "렌더링에서 Array.includes/indexOf — O(n) 반복 탐색",
+    "why": "배열.includes()는 O(n)입니다. 리스트/트리 렌더링에서 매 노드마다 호출하면 O(nodes × array) — 노드 200개, 배열 100개면 렌더 1번에 2만 번 탐색합니다.",
+    "fix": "const selectedSet = new Set(selectedIds) 로 변환 후 selectedSet.has(id)를 사용하세요. O(1) 탐색.",
+    "detect": { "type": "regex", "pattern": "\\b\\w+Ids?\\.(includes|indexOf)\\s*\\(" },
+    "codeExample": {
+      "bad": "// ❌ O(n) 탐색 — 트리/리스트에서 성능 폭발\nconst isSelected = selectedIds.includes(id);",
+      "good": "// ✅ O(1) 탐색 — Set 사용\nconst selectedSet = useMemo(\n  () => new Set(selectedIds),\n  [selectedIds]\n);\nconst isSelected = selectedSet.has(id);"
+    }
+  },
+  {
+    "id": "direct-dom-manipulation",
+    "level": "high",
+    "category": "security",
+    "emoji": "🖐️",
+    "title": "직접 DOM 조작 — React 가상 DOM 우회",
+    "why": "document.querySelector 등으로 직접 DOM을 조작하면 React의 상태 관리와 충돌하여 예측 불가능한 버그가 발생해요.",
+    "fix": "useRef + ref prop을 사용하세요. DOM 접근이 필요하면 React 방식으로.",
+    "detect": { "type": "regex", "pattern": "\\bdocument\\.(querySelector|getElementById|getElementsBy|createElement)\\s*\\(" }
+  },
+  {
+    "id": "large-component",
+    "level": "medium",
+    "category": "style",
+    "emoji": "📏",
+    "title": "100줄 이상 대형 컴포넌트 — 분리 권장",
+    "why": "컴포넌트가 너무 길면 읽기/수정/테스트가 어렵고, 버그 발생 확률이 높아져요.",
+    "fix": "UI 영역별로 하위 컴포넌트를 분리하고, 로직은 커스텀 Hook으로 추출하세요.",
+    "detect": { "type": "special", "handler": "largeComponent" }
+  },
+  {
+    "id": "prop-spreading",
+    "level": "low",
+    "category": "style",
+    "emoji": "🌊",
+    "title": "props 스프레딩 {...props} — 의도 불명확",
+    "why": "어떤 props가 전달되는지 코드만 봐서는 알 수 없어요. 의도치 않은 DOM 속성 전달 위험.",
+    "fix": "필요한 props만 명시적으로 전달하세요. {...rest}는 최소한으로 사용.",
+    "detect": { "type": "regex", "pattern": "\\{\\.\\.\\.(props|rest|other)" }
+  },
+  {
+    "id": "useref-not-in-effect",
+    "level": "low",
+    "category": "hooks",
+    "emoji": "📌",
+    "title": "useRef.current를 렌더링에 직접 사용",
+    "why": "ref.current는 변경되어도 리렌더를 트리거하지 않아요. 렌더링에 사용하면 화면이 업데이트되지 않습니다.",
+    "fix": "렌더링에 반영해야 할 값은 useState를 사용하세요. ref는 DOM 참조나 이전 값 저장에만.",
+    "detect": {
+      "type": "regex-context",
+      "pattern": "\\bref\\.current\\b",
+      "context": { "scope": "component-body" }
+    }
+  },
+  {
+    "id": "console-log",
+    "level": "low",
+    "category": "style",
+    "emoji": "📝",
+    "title": "console.log 잔존",
+    "why": "개발 중 디버깅 코드가 배포에 포함되면 성능에 영향을 줄 수 있어요.",
+    "fix": "배포 전 console.log를 제거하거나 환경변수로 조건부 처리하세요.",
+    "detect": { "type": "regex", "pattern": "console\\.(log|warn|error)\\s*\\(" }
+  },
+  {
+    "id": "too-many-states",
+    "level": "low",
+    "category": "state",
+    "emoji": "🗂️",
+    "title": "useState 5개 이상 — 커스텀 훅 고려",
+    "why": "상태가 너무 많으면 컴포넌트가 복잡해지고 관리하기 어려워요.",
+    "fix": "관련 상태들을 custom hook으로 묶으면 코드가 깔끔해져요.",
+    "detect": { "type": "count", "target": "useState", "min": 5 }
+  },
+  {
+    "id": "any-type",
+    "level": "low",
+    "category": "style",
+    "emoji": "🏷️",
+    "title": "any 타입 사용 — 타입 안전성 저하",
+    "why": "TypeScript의 보호 기능이 무력화되어 런타임 에러를 사전에 잡지 못해요.",
+    "fix": "구체적 타입, unknown, 또는 제네릭을 사용하세요.",
+    "detect": { "type": "regex", "pattern": ":\\s*any\\b|<any>|as\\s+any\\b" }
+  }
+]

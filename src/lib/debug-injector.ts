@@ -51,6 +51,27 @@ export function getSmartLabel(varName: string): string {
   return '';
 }
 
+/** 파일명별 콘솔 색상 팔레트 (8색) */
+const FILE_COLORS = [
+  'color:#61AFEF;font-weight:bold',
+  'color:#E06C75;font-weight:bold',
+  'color:#98C379;font-weight:bold',
+  'color:#E5C07B;font-weight:bold',
+  'color:#C678DD;font-weight:bold',
+  'color:#56B6C2;font-weight:bold',
+  'color:#D19A66;font-weight:bold',
+  'color:#BE5046;font-weight:bold',
+];
+
+/** 파일명 → 팔레트 인덱스 해시 */
+function hashFileName(name: string): number {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = ((hash << 5) - hash + name.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash) % FILE_COLORS.length;
+}
+
 function cap(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
@@ -101,7 +122,10 @@ function findBodyStartSplice(lines: string[], startLine: number): number | null 
   const from = Math.max(0, startLine - 1); // 0-indexed
   const to   = Math.min(from + 30, lines.length);
   for (let i = from; i < to; i++) {
-    if (lines[i].trimEnd().endsWith('{')) {
+    const trimmed = lines[i].trimEnd();
+    // `({` 로 끝나면 구조분해 파라미터 시작이므로 건너뜀
+    // e.g. `function TreeNode({` or `const Foo = ({`
+    if (trimmed.endsWith('{') && !trimmed.endsWith('({')) {
       return i + 1; // splice AFTER this line (= body 첫 줄 앞)
     }
   }
@@ -116,10 +140,10 @@ function findBodyStartSplice(lines: string[], startLine: number): number | null 
  *        defaultItems,
  *      );                                            ← depth 0, ';' 발견
  */
-function findStatementEndSplice(lines: string[], startLine: number): number {
+function findStatementEndSplice(lines: string[], startLine: number): number | null {
   let depth = 0;
   const from = startLine - 1; // 0-indexed
-  for (let i = from; i < Math.min(from + 15, lines.length); i++) {
+  for (let i = from; i < Math.min(from + 100, lines.length); i++) {
     for (const ch of lines[i]) {
       if (ch === '(' || ch === '[' || ch === '{') depth++;
       if (ch === ')' || ch === ']' || ch === '}') depth--;
@@ -128,7 +152,7 @@ function findStatementEndSplice(lines: string[], startLine: number): number {
       return i + 1; // splice AFTER this line
     }
   }
-  return startLine; // fallback: 단일 줄로 가정
+  return null; // 끝을 찾지 못함 → 삽입 건너뜀
 }
 
 /**
@@ -259,12 +283,19 @@ function buildInjectionPoints(
   source: string,
   result: AnalysisResult,
   labelResult: AnalysisResult,
+  fileTag: string,
+  fileColor: string,
 ): InjectionPoint[] {
   const lines = source.split('\n');
   const points: InjectionPoint[] = [];
   const used = new Set<number>();
 
-  const addPoint = (spliceAt: number, code: string, category: InjectionPoint['category']) => {
+  // Color prefix/suffix for console.log
+  const cp = fileColor ? `'%c${fileTag}%c` : `'${fileTag}`;
+  const cs = fileColor ? `, '${fileColor}', 'color:inherit'` : '';
+
+  const addPoint = (spliceAt: number | null, code: string, category: InjectionPoint['category']) => {
+    if (spliceAt === null) return;
     const at = Math.max(0, Math.min(spliceAt, lines.length));
     if (!used.has(at)) {
       used.add(at);
@@ -281,7 +312,7 @@ function buildInjectionPoints(
       const bodyStart = findBodyStartSplice(lines, comp.startLine);
       if (bodyStart !== null) {
         const propsStr = comp.props.slice(0, 5).join(', ');
-        const logArgs = `'[L:${lComp.startLine}][${comp.name}][props]', { ${propsStr} }`;
+        const logArgs = `${cp}[L:${lComp.startLine}][${comp.name}][props]'${cs}, { ${propsStr} }`;
         addPoint(bodyStart, makeMarker(lComp.startLine, logArgs, 'props'), 'props');
       }
     }
@@ -296,7 +327,7 @@ function buildInjectionPoints(
         const afterDecl = findStatementEndSplice(lines, h.line);
         const smartLabel = getSmartLabel(h.stateVar);
         const labelStr = smartLabel ? `${h.stateVar}(${smartLabel})` : h.stateVar;
-        const logArgs = `'[L:${lH.line}][state] ${labelStr} =', ${h.stateVar}`;
+        const logArgs = `${cp}[L:${lH.line}][state] ${labelStr} ='${cs}, ${h.stateVar}`;
         addPoint(afterDecl, makeMarker(lH.line, logArgs, 'state'), 'state');
       } else if (h.name === 'useMemo' && (h.memoVar || (h.memoVars && h.memoVars.length > 0))) {
         // useMemo 선언 끝(;) 다음 줄에 계산된 값 로깅
@@ -307,12 +338,12 @@ function buildInjectionPoints(
           // 단순: const data = useMemo(...)
           const smartLabel = getSmartLabel(h.memoVar);
           const labelStr = smartLabel ? `${h.memoVar}(${smartLabel})` : h.memoVar;
-          const logArgs = `'[L:${lH.line}][useMemo] ${labelStr} =', ${h.memoVar}${depsObj}`;
+          const logArgs = `${cp}[L:${lH.line}][useMemo] ${labelStr} ='${cs}, ${h.memoVar}${depsObj}`;
           addPoint(afterDecl, makeMarker(lH.line, logArgs, 'state'), 'state');
         } else if (h.memoVars) {
           // 구조분해: const { a, b } = useMemo(...) 또는 const [a, b] = useMemo(...)
           const varsStr = h.memoVars.slice(0, 5).join(', ');
-          const logArgs = `'[L:${lH.line}][useMemo] { ${varsStr} } =', { ${h.memoVars.join(', ')} }${depsObj}`;
+          const logArgs = `${cp}[L:${lH.line}][useMemo] { ${varsStr} } ='${cs}, { ${h.memoVars.join(', ')} }${depsObj}`;
           addPoint(afterDecl, makeMarker(lH.line, logArgs, 'state'), 'state');
         }
       } else if (h.name === 'useEffect') {
@@ -322,8 +353,71 @@ function buildInjectionPoints(
           const depsStr = h.deps ? ` deps:${h.deps}` : '';
           const depsVars = parseDepsToVars(h.deps);
           const depsObj = depsVars.length > 0 ? `, { ${depsVars.join(', ')} }` : '';
-          const logArgs = `'[L:${lH.line}][useEffect]${depsStr} 시작'${depsObj}`;
+          const logArgs = `${cp}[L:${lH.line}][useEffect]${depsStr} 시작'${cs}${depsObj}`;
           addPoint(bodyStart, makeMarker(lH.line, logArgs, 'effect'), 'effect');
+        }
+      } else if (h.name === 'useReducer') {
+        const rm = /^\s*const\s+\[(\w+)/.exec(lines[h.line - 1] || '');
+        if (rm) {
+          const stateVar = rm[1];
+          const afterDecl = findStatementEndSplice(lines, h.line);
+          const sl = getSmartLabel(stateVar);
+          const labelStr = sl ? `${stateVar}(${sl})` : stateVar;
+          const logArgs = `${cp}[L:${lH.line}][useReducer] ${labelStr} ='${cs}, ${stateVar}`;
+          addPoint(afterDecl, makeMarker(lH.line, logArgs, 'state'), 'state');
+        }
+      } else if (h.name === 'useRef') {
+        const rm = /^\s*const\s+(\w+)\s*=\s*useRef/.exec(lines[h.line - 1] || '');
+        if (rm) {
+          const refVar = rm[1];
+          const afterDecl = findStatementEndSplice(lines, h.line);
+          const logArgs = `${cp}[L:${lH.line}][useRef] ${refVar} ='${cs}, ${refVar}`;
+          addPoint(afterDecl, makeMarker(lH.line, logArgs, 'state'), 'state');
+        }
+      } else if (h.name === 'useContext') {
+        const afterDecl = findStatementEndSplice(lines, h.line);
+        const srcLine = lines[h.line - 1] || '';
+        const destructM = /^\s*const\s+\{([^}]+)\}\s*=\s*useContext/.exec(srcLine);
+        if (destructM) {
+          const vars = destructM[1].split(',').map(s => s.trim().split(':')[0].split('=')[0].trim()).filter(Boolean);
+          if (vars.length > 0) {
+            const varsStr = vars.slice(0, 5).join(', ');
+            const logArgs = `${cp}[L:${lH.line}][useContext] { ${varsStr} } ='${cs}, { ${vars.join(', ')} }`;
+            addPoint(afterDecl, makeMarker(lH.line, logArgs, 'state'), 'state');
+          }
+        } else {
+          const simpleM = /^\s*const\s+(\w+)\s*=\s*useContext/.exec(srcLine);
+          if (simpleM) {
+            const logArgs = `${cp}[L:${lH.line}][useContext] ${simpleM[1]} ='${cs}, ${simpleM[1]}`;
+            addPoint(afterDecl, makeMarker(lH.line, logArgs, 'state'), 'state');
+          }
+        }
+      } else if (h.name === 'useCallback') {
+        const depsVars = parseDepsToVars(h.deps);
+        if (depsVars.length > 0) {
+          const afterDecl = findStatementEndSplice(lines, h.line);
+          const depsStr = h.deps ? ` deps:${h.deps}` : '';
+          const logArgs = `${cp}[L:${lH.line}][useCallback]${depsStr}'${cs}, { ${depsVars.join(', ')} }`;
+          addPoint(afterDecl, makeMarker(lH.line, logArgs, 'state'), 'state');
+        }
+      } else if (/^use[A-Z]/.test(h.name)) {
+        // 커스텀 훅: 결과 변수 로깅
+        const afterDecl = findStatementEndSplice(lines, h.line);
+        const srcLine = lines[h.line - 1] || '';
+        const destructM = /^\s*const\s+\{([^}]+)\}\s*=/.exec(srcLine);
+        if (destructM) {
+          const vars = destructM[1].split(',').map(s => s.trim().split(':')[0].split('=')[0].trim()).filter(Boolean);
+          if (vars.length > 0) {
+            const varsStr = vars.slice(0, 5).join(', ');
+            const logArgs = `${cp}[L:${lH.line}][${h.name}] { ${varsStr} } ='${cs}, { ${vars.join(', ')} }`;
+            addPoint(afterDecl, makeMarker(lH.line, logArgs, 'state'), 'state');
+          }
+        } else {
+          const simpleM = /^\s*const\s+(\w+)\s*=/.exec(srcLine);
+          if (simpleM) {
+            const logArgs = `${cp}[L:${lH.line}][${h.name}] ${simpleM[1]} ='${cs}, ${simpleM[1]}`;
+            addPoint(afterDecl, makeMarker(lH.line, logArgs, 'state'), 'state');
+          }
         }
       }
 
@@ -339,7 +433,7 @@ function buildInjectionPoints(
             const depsVars = parseDepsToVars(h.deps);
             if (depsVars.length > 0) {
               const depsStr = h.deps ? ` deps:${h.deps}` : '';
-              const logArgs = `'[L:${lH.line}][useMemo]${depsStr} 시작', { ${depsVars.join(', ')} }`;
+              const logArgs = `${cp}[L:${lH.line}][useMemo]${depsStr} 시작'${cs}, { ${depsVars.join(', ')} }`;
               addPoint(cbStart, makeMarker(lH.line, logArgs, 'state'), 'state');
             }
           }
@@ -357,8 +451,43 @@ function buildInjectionPoints(
             const afterVarDecl = findStatementEndSplice(lines, i + 1);
             const sl = getSmartLabel(varName);
             const labelStr = sl ? `${varName}(${sl})` : varName;
-            const logArgs = `'[L:${i + 1}][${h.name}] ${labelStr} =', ${varName}`;
+            const logArgs = `${cp}[L:${i + 1}][${h.name}] ${labelStr} ='${cs}, ${varName}`;
             addPoint(afterVarDecl, makeMarker(i + 1, logArgs, cat), cat);
+          }
+        }
+      }
+    }
+
+    // ── 컴포넌트 body 일반 변수 스캔 ──
+    const compBodyStart = findBodyStartSplice(lines, comp.startLine);
+    if (compBodyStart !== null) {
+      for (let i = compBodyStart; i < comp.endLine - 1; i++) {
+        const ln = lines[i];
+        if (/\buse[A-Z]\w*\s*[\(<]/.test(ln)) continue;
+        if (INNER_ARROW_RE.test(ln) || INNER_FUNC_RE.test(ln)) continue;
+        if (/^\s*return\b/.test(ln)) continue;
+
+        // 단순 변수: const foo = ...
+        const simpleM = /^\s*(?:const|let|var)\s+([a-zA-Z_$][\w$]*)\s*=/.exec(ln);
+        if (simpleM) {
+          const varName = simpleM[1];
+          const afterDecl = findStatementEndSplice(lines, i + 1);
+          const sl = getSmartLabel(varName);
+          const labelStr = sl ? `${varName}(${sl})` : varName;
+          const logArgs = `${cp}[L:${i + 1}][${comp.name}][var] ${labelStr} ='${cs}, ${varName}`;
+          addPoint(afterDecl, makeMarker(i + 1, logArgs, 'state'), 'state');
+          continue;
+        }
+
+        // 구조분해: const { a, b } = ... 또는 const [a, b] = ...
+        const destructM = /^\s*(?:const|let|var)\s+[\[{]([^}\]]+)[\]}]\s*=/.exec(ln);
+        if (destructM) {
+          const vars = destructM[1].split(',').map(s => s.trim().split(':')[0].split('=')[0].trim()).filter(Boolean);
+          if (vars.length > 0) {
+            const afterDecl = findStatementEndSplice(lines, i + 1);
+            const varsStr = vars.slice(0, 5).join(', ');
+            const logArgs = `${cp}[L:${i + 1}][${comp.name}][var] { ${varsStr} } ='${cs}, { ${vars.join(', ')} }`;
+            addPoint(afterDecl, makeMarker(i + 1, logArgs, 'state'), 'state');
           }
         }
       }
@@ -368,7 +497,7 @@ function buildInjectionPoints(
     if (comp.endLine > 1) {
       const returnSplice = findReturnSplice(lines, comp.startLine, comp.endLine);
       if (returnSplice !== null) {
-        const renderArgs = `'[L:${returnSplice + 1}][${comp.name}] render'`;
+        const renderArgs = `${cp}[L:${returnSplice + 1}][${comp.name}] render'${cs}`;
         addPoint(returnSplice, makeMarker(returnSplice + 1, renderArgs, 'render'), 'render');
       }
     }
@@ -381,7 +510,7 @@ function buildInjectionPoints(
     if (!fn.isComponent && fn.name && fn.startLine > 0) {
       const bodyStart = findBodyStartSplice(lines, fn.startLine);
       if (bodyStart !== null) {
-        const logArgs = `'[L:${lFn.startLine}][${fn.name}] 진입'`;
+        const logArgs = `${cp}[L:${lFn.startLine}][${fn.name}] 진입'${cs}`;
         addPoint(bodyStart, makeMarker(lFn.startLine, logArgs, 'handler'), 'handler');
       }
     }
@@ -403,7 +532,7 @@ function buildInjectionPoints(
       const fnBodyStart = findBodyStartSplice(lines, i + 1);
       if (fnBodyStart === null) continue;
 
-      const logArgs = `'[L:${i + 1}][${fnName}] 진입'`;
+      const logArgs = `${cp}[L:${i + 1}][${fnName}] 진입'${cs}`;
       addPoint(fnBodyStart, makeMarker(i + 1, logArgs, 'handler'), 'handler');
     }
   }
@@ -411,7 +540,7 @@ function buildInjectionPoints(
   return points;
 }
 
-export function injectLogs(source: string, result: AnalysisResult): InjectionResult {
+export function injectLogs(source: string, result: AnalysisResult, fileName?: string): InjectionResult {
   const lines = source.split('\n');
 
   // ── 1패스: 표현식 body 컴포넌트를 블록 body 로 변환 ──
@@ -459,7 +588,9 @@ export function injectLogs(source: string, result: AnalysisResult): InjectionRes
 
   // ── 2패스: 변환된 소스에 로그 포인트 삽입 ──
   const transformedSource = lines.join('\n');
-  const points = buildInjectionPoints(transformedSource, adjustedResult, result);
+  const fileTag = fileName ? `[${fileName}]` : '';
+  const fileColor = fileName ? FILE_COLORS[hashFileName(fileName)] : '';
+  const points = buildInjectionPoints(transformedSource, adjustedResult, result, fileTag, fileColor);
 
   const sorted = [...points].sort((a, b) => b.line - a.line);
   const finalLines = transformedSource.split('\n');

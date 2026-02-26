@@ -244,7 +244,10 @@ const CodeInput = forwardRef<CodeInputHandle, Props>(function CodeInput(
           type="file"
           accept=".tsx,.ts,.jsx,.js"
           className="hidden"
-          onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
+          onChange={e => {
+            if (e.target.files?.[0]) handleFile(e.target.files[0]);
+            e.target.value = '';  // 같은 파일 재선택 허용
+          }}
         />
       </div>
 
