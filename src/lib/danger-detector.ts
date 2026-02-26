@@ -318,16 +318,35 @@ function detectFetchInUseMemo(lines: string[]): number[] {
   const fetchPattern = /\b(fetch\w*|load\w*|get[A-Z]\w+|axios|api\.|http\.|\.get\(|\.post\()\b/;
 
   for (let i = 0; i < lines.length; i++) {
-    if (/\buseMemo\s*\(/.test(lines[i])) {
-      const end = findClosingCurlyBrace(lines, i);
-      for (let j = i; j <= end; j++) {
-        if (fetchPattern.test(lines[j])) {
-          matched.push(j + 1);
-        }
+    const memoMatch = lines[i].match(/useMemo\s*\(/);
+    if (!memoMatch) continue;
+
+    // useMemo( 이후부터 { 를 찾아야 구조분해 { } 오탐 방지
+    const memoPos = memoMatch.index! + memoMatch[0].length;
+    const end = findClosingCurlyBraceFrom(lines, i, memoPos);
+    for (let j = i; j <= end; j++) {
+      if (fetchPattern.test(lines[j])) {
+        matched.push(j + 1);
       }
     }
   }
   return matched.length > 0 ? matched : [-1];
+}
+
+/** startLine의 charOffset 위치부터 { } 를 추적하여 닫는 줄 번호 반환 */
+function findClosingCurlyBraceFrom(lines: string[], startLine: number, charOffset: number): number {
+  let depth = 0;
+  let foundOpen = false;
+  for (let i = startLine; i < lines.length; i++) {
+    const start = i === startLine ? charOffset : 0;
+    for (let c = start; c < lines[i].length; c++) {
+      const ch = lines[i][c];
+      if (ch === '{') { depth++; foundOpen = true; }
+      if (ch === '}') depth--;
+      if (foundOpen && depth === 0) return i;
+    }
+  }
+  return Math.min(startLine + 20, lines.length - 1);
 }
 
 function detectInfiniteLoop(lines: string[], result: AnalysisResult): number[] {
